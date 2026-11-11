@@ -51,15 +51,18 @@
   ],
   "dominio": [
     "KEY_F",
-    "PAD_START"
+    "PAD_BACK"
   ],
   "simples": [
-    "KEY_C",
-    "PAD_BACK"
+    "KEY_C"
   ],
   "confirmar": [
     "KEY_RETURN",
     "PAD_A"
+  ],
+  "pausa": [
+    "KEY_ESCAPE",
+    "PAD_START"
   ],
   "sair": [
     "KEY_ESCAPE"

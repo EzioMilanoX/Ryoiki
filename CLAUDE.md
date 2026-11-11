@@ -65,6 +65,15 @@ choque de domínios e Domínio Simples. Nada de elenco, mapa ou história antes 
    (riscos avisados que atravessam a arena; o primeiro passa em cima do jogador), Clivar
    (investida), Fuga (um projétil grande) e o domínio 伏魔御廚子, o mais refinado (0,3):
    no choque, sem reagir, perde-se rápido; o Domínio Simples é a resposta.
+7. ✅ Quarto chefe: Dagon (陀艮, `visual: abismo`), feito só com tipos de padrão que já
+   existiam (cardume = `invocar`, gêiseres = `erupcoes`, jato = `brasas`); entrou na rota.
+   Oficina: nome da técnica escolhido de `oficina.NOMES` (a engine ainda não tem digitação).
+   Controle: Start pausa (ação `pausa`), Back abre o domínio, e segurar o reforço sob o
+   domínio inimigo vira Domínio Simples (o C segue no teclado).
+
+## Git
+Repositório local criado (branch `main`, identidade local EzioMilanoX). Ainda sem remoto
+no GitHub: criar e dar push só quando o Enzo pedir.
 
 ## Riscos conhecidos (limits do blueprint)
 - Feel de ação exige muito ajuste (hitstop, knockback, i-frames).

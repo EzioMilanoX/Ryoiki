@@ -70,12 +70,22 @@ def test_a_tela_troca_pecas_salva_e_o_titulo_escolhe_a_propria(tmp_path, monkeyp
     monkeypatch.setenv("APPDATA", str(tmp_path))
     e, voltou = Entrada(), []
     ofi = OficinaScene(e, lambda: voltou.append(1))
-    apertar(ofi, e, "baixo", "direita")  # forma do golpe 1: a próxima
+    apertar(ofi, e, "baixo", "baixo", "direita")  # forma do golpe 1: a próxima
     assert ofi.montagem.golpes[0].forma == list(of.FORMAS)[1]
-    apertar(ofi, e, "cima", "cima", "confirmar")  # dá a volta até a última linha (salvar)
+    apertar(ofi, e, "cima", "cima", "cima", "confirmar")  # dá a volta até a última linha (salvar)
     assert voltou == [1] and of.caminho_proprio().exists()
     titulo = TituloScene(e, lambda arena: None, ao_oficina=lambda: None)
     titulo.da_oficina = True
     titulo.on_enter(None, None)
     assert titulo.tecnica.id == of.ID_PROPRIA
     assert isinstance(titulo.criar_arena(), ArenaScene)
+
+
+def test_o_nome_escolhido_vai_para_a_tecnica_e_o_dominio(tmp_path):
+    m = of.Montagem(nome=1)
+    of.salvar(m, tmp_path / "t.json")
+    t = carregar_tecnicas(propria=tmp_path / "t.json")["propria"]
+    fim, kanji = of.NOMES[1]
+    assert t.nome == f"Técnica {fim}" and t.kanji.startswith(kanji)
+    assert t.dominio.nome == f"Domínio {fim}"
+    assert of.carregar(tmp_path / "t.json").nome == 1

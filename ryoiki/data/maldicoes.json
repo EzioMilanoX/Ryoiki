@@ -214,6 +214,79 @@
         "queimado": 4,
         "refinamento": 0.3
       }
+    },
+    "dagon": {
+      "nome": "Dagon",
+      "titulo": "maldição de grau especial nascida do medo do mar",
+      "kanji": "陀艮",
+      "visual": "abismo",
+      "cor": [
+        60,
+        170,
+        190
+      ],
+      "vida": 950,
+      "raio": 32,
+      "massa": 4,
+      "velocidade": 60,
+      "distancia": 250,
+      "espera": 1.0,
+      "regeneracao": 0,
+      "padroes": [
+        {
+          "id": "cardume",
+          "nome": "Cardume de Shikigami",
+          "tipo": "invocar",
+          "carga": 0.5,
+          "recuperacao": 0.5,
+          "quantidade": 4,
+          "maximo": 8,
+          "vida": 18,
+          "raio": 10,
+          "velocidade": 170,
+          "dano": 7
+        },
+        {
+          "id": "maremoto",
+          "nome": "Gêiseres",
+          "tipo": "erupcoes",
+          "carga": 0.45,
+          "recuperacao": 0.5,
+          "quantidade": 6,
+          "espalhar": 260,
+          "raio": 60,
+          "atraso": 0.8,
+          "dano": 12
+        },
+        {
+          "id": "jato",
+          "nome": "Jato d'Água",
+          "tipo": "brasas",
+          "carga": 0.5,
+          "recuperacao": 0.5,
+          "quantidade": 5,
+          "espalhar": 50,
+          "velocidade": 450,
+          "raio": 11,
+          "alcance": 850,
+          "dano": 9
+        }
+      ],
+      "dominio": {
+        "nome": "Horizonte da Skandha Cativante",
+        "kanji": "蕩蘊平線",
+        "entoar": 1.5,
+        "interromper": 60,
+        "duracao": 6,
+        "tique": 0.4,
+        "dano_tique": 4,
+        "gatilhos": [
+          0.6,
+          0.3
+        ],
+        "queimado": 5,
+        "refinamento": 0.24
+      }
     }
   }
 }

@@ -4,8 +4,8 @@
   "lutas": [
     {"chefe": "vulcao", "grau": 1.0},
     {"chefe": "mahito", "grau": 1.0},
-    {"chefe": "vulcao", "grau": 1.35},
-    {"chefe": "mahito", "grau": 1.6},
+    {"chefe": "dagon", "grau": 1.15},
+    {"chefe": "mahito", "grau": 1.45},
     {"chefe": "sukuna", "grau": 1.0}
   ],
   "recompensas": [

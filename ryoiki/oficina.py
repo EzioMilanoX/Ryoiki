@@ -73,6 +73,21 @@ EFEITOS: dict[str, tuple[str, float, dict]] = {
 
 VAZIO = ""
 MAX_EFEITOS = 3
+# os nomes possíveis (a engine ainda não tem digitação): (o fim do nome, o kanji)
+NOMES: list[tuple[str, str]] = [
+    ("Própria", "自己"),
+    ("dos Fios Rubros", "赤糸"),
+    ("da Lâmina Silenciosa", "静刃"),
+    ("do Eco Partido", "割響"),
+    ("das Cinzas Vivas", "灰生"),
+    ("do Corvo Negro", "黒鴉"),
+    ("da Maré Funda", "深潮"),
+    ("do Trovão Contido", "封雷"),
+    ("da Flor de Ferro", "鉄花"),
+    ("do Espelho Torto", "歪鏡"),
+    ("da Sombra Longa", "長影"),
+]
+
 CORES: list[tuple[int, int, int]] = [
     (90, 200, 160),
     (230, 120, 80),
@@ -120,6 +135,7 @@ class GolpeMontado:
 @dataclass
 class Montagem:
     cor: int = 0
+    nome: int = 0  # índice em NOMES
     golpes: list[GolpeMontado] = field(
         default_factory=lambda: [
             GolpeMontado("disparo", ["dano_leve", "marcar", VAZIO]),
@@ -153,14 +169,15 @@ class Montagem:
             efeitos_dominio.append(ef)
         if not efeitos_dominio:
             efeitos_dominio = [{"tipo": "dano", "valor": 3}]
+        fim, kanji = NOMES[self.nome % len(NOMES)]
         return {
-            "nome": "Técnica Própria",
-            "kanji": "自己術式",
+            "nome": f"Técnica {fim}",
+            "kanji": f"{kanji}術式",
             "cor": list(CORES[self.cor % len(CORES)]),
             "golpes": golpes,
             "dominio": {
-                "nome": "Domínio Próprio",
-                "kanji": "自己領域",
+                "nome": f"Domínio {fim}",
+                "kanji": f"{kanji}領域",
                 "duracao": 4.5,
                 "tique": 0.5,
                 "refinamento": 0.19,
@@ -169,7 +186,11 @@ class Montagem:
         }
 
     def cru(self) -> dict:
-        return {"cor": self.cor, "golpes": [[g.forma, list(g.efeitos)] for g in self.golpes]}
+        return {
+            "cor": self.cor,
+            "nome": self.nome,
+            "golpes": [[g.forma, list(g.efeitos)] for g in self.golpes],
+        }
 
     @classmethod
     def do_cru(cls, d: dict) -> Montagem:
@@ -178,7 +199,7 @@ class Montagem:
             efeitos = [e if e in EFEITOS else VAZIO for e in efeitos][:MAX_EFEITOS]
             efeitos += [VAZIO] * (MAX_EFEITOS - len(efeitos))
             golpes.append(GolpeMontado(forma if forma in FORMAS else "disparo", efeitos))
-        return cls(d.get("cor", 0), golpes)
+        return cls(d.get("cor", 0), d.get("nome", 0), golpes)
 
 
 def salvar(m: Montagem, caminho: Path | None = None) -> Path:

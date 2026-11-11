@@ -837,3 +837,46 @@ def aviso_corte(r, cam, c, cor) -> None:
 
 
 DESENHOS_CHEFE["rei"] = chefe_rei
+
+
+# ------------------------------------------------------------- o quarto chefe (v1, passo 7)
+
+CARNE_ABISMO = (150, 72, 62, 255)
+CARNE_ABISMO_2 = (104, 44, 44, 255)
+AGUA = (60, 170, 190, 255)
+
+
+def chefe_abismo(r, sx, sy, raio, relogio, olhar, *, ferido=False, queimado=False) -> None:
+    """Visto de cima: uma cabeça bulbosa de polvo, tentáculos ondulando e um anel de água."""
+    ang = math.atan2(olhar[1], olhar[0])
+    r.draw_ui_polygon(elipse(sx + 6, sy + 9, raio * 1.3, raio * 1.0), a(PRETO, 130))
+    if not queimado:
+        onda = raio * (1.5 + 0.08 * math.sin(relogio * 3))
+        r.draw_ui_circle(sx, sy, onda, a(AGUA, 70), 2)
+    for i in range(8):  # os tentáculos, cada um uma linha quebrada que ondula
+        base = ang + math.pi + (i - 3.5) * 0.42
+        x, y = sx + math.cos(base) * raio * 0.7, sy + math.sin(base) * raio * 0.7
+        pts = [(x, y)]
+        for k in range(4):
+            t = base + math.sin(relogio * 3 + i + k) * 0.35
+            x += math.cos(t) * raio * 0.32
+            y += math.sin(t) * raio * 0.32
+            pts.append((x, y))
+        for p, q in zip(pts, pts[1:], strict=False):
+            r.draw_ui_line(p[0], p[1], q[0], q[1], CARNE_ABISMO_2, 7)
+            r.draw_ui_line(p[0], p[1], q[0], q[1], CARNE_ABISMO, 4)
+    r.draw_ui_polygon(
+        elipse(sx, sy, raio * 0.95, raio * 1.1, ang), TINTA if ferido else CARNE_ABISMO
+    )
+    r.draw_ui_polygon(elipse(sx, sy, raio * 0.95, raio * 1.1, ang), CARNE_ABISMO_2, 2)
+    px, py = -olhar[1], olhar[0]
+    for k in (-1, 1):  # os olhos pequenos, na frente
+        ex = sx + olhar[0] * raio * 0.55 + px * k * raio * 0.3
+        ey = sy + olhar[1] * raio * 0.55 + py * k * raio * 0.3
+        r.draw_ui_circle(ex, ey, raio * 0.14, (240, 230, 200, 255))
+        r.draw_ui_circle(ex + olhar[0] * 2, ey + olhar[1] * 2, raio * 0.07, PRETO)
+    bx, by = sx + olhar[0] * raio * 0.85, sy + olhar[1] * raio * 0.85
+    r.draw_ui_polygon(elipse(bx, by, raio * 0.12, raio * 0.3, ang), (200, 70, 80, 255))
+
+
+DESENHOS_CHEFE["abismo"] = chefe_abismo

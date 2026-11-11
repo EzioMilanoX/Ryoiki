@@ -48,14 +48,14 @@ def test_a_lista_de_tecnicas_volta_ao_inicio():
 def test_esc_pausa_e_o_mundo_para():
     e = Entrada()
     arena = ArenaScene(e)
-    apertar(arena, e, "sair")
+    apertar(arena, e, "pausa")
     assert arena.pausado
     x = arena.alvo.x
     arena.chefe.t_espera = 0
     for _ in range(120):
         arena.update(None, 1 / 60)
     assert arena.alvo.x == x and arena.chefe.estado == "andando"
-    apertar(arena, e, "sair")
+    apertar(arena, e, "pausa")
     assert not arena.pausado
 
 
@@ -63,8 +63,20 @@ def test_a_pausa_recomeca_a_luta_e_volta_ao_titulo():
     e, voltas = Entrada(), []
     arena = ArenaScene(e, ao_titulo=lambda: voltas.append(1))
     arena.alvo.vida = 10
-    apertar(arena, e, "sair", "baixo", "confirmar")  # Recomeçar a luta
+    apertar(arena, e, "pausa", "baixo", "confirmar")  # Recomeçar a luta
     assert not arena.pausado and arena.alvo.vida == arena.alvo.vida_max
-    apertar(arena, e, "sair", "baixo", "baixo", "confirmar")  # Voltar ao título
+    apertar(arena, e, "pausa", "baixo", "baixo", "confirmar")  # Voltar ao título
     assert voltas == [1]
     assert "Sair do jogo" not in arena.opcoes  # sem ao_sair, não oferece
+
+
+def test_segurar_o_reforco_sob_o_dominio_dele_vira_dominio_simples():
+    e = Entrada()
+    arena = ArenaScene(e)
+    arena.chefe.t_espera = 99
+    arena.chefe.t_dominio, arena.chefe.t_tique = 5.0, 0.4
+    e.seguros = {"reforco"}
+    vida = arena.vitalidade.vida
+    for _ in range(90):
+        arena.update(None, 1 / 60)
+    assert arena.expansao.simples and arena.vitalidade.vida == vida

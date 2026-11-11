@@ -177,7 +177,7 @@ class ArenaScene(IScene):
         dt = min(delta_time, 1 / 30)  # um engasgo não teleporta o jogador
         self.relogio += dt
         e = self.entrada
-        if e.is_action_pressed("sair"):
+        if e.is_action_pressed("pausa"):
             self.pausado, self.opcao = not self.pausado, 0
             return
         if self.pausado:
@@ -268,7 +268,9 @@ class ArenaScene(IScene):
             g,
             self.chefe,
             bombeando=e.is_action_held("dominio"),
-            segurando_simples=e.is_action_held("simples"),
+            # no controle não sobra botão: reforço segurado sob o domínio dele vira Simples
+            segurando_simples=e.is_action_held("simples")
+            or (e.is_action_held("reforco") and self.chefe.dominio_ativo and not xp.em_choque),
             dano_causado=vida_antes - self.alvo.vida,
         ):
             self.efeitos += v.efeitos_da_tecnica(ac, self.conjurador.tecnica.cor, self.rng)
@@ -547,7 +549,7 @@ class ArenaScene(IScene):
                 LARGURA / 2,
                 y + 22,
                 f"{d.dominio.kanji}  {ch.t_dominio:.1f}s · acerto garantido: reforço reduz, "
-                "Domínio Simples (C) anula",
+                "Domínio Simples (C ou segure o reforço) anula",
                 13,
                 v.a(v.LAVA_CLARA, 230),
                 anchor="center",

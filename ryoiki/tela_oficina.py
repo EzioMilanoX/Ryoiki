@@ -28,7 +28,7 @@ class OficinaScene(IScene):
         self.relogio = 0.0
         self.aviso = ("", 0.0)
         # cada linha: ("cor",) | ("forma", golpe) | ("efeito", golpe, posição) | ("salvar",)
-        self.linhas: list[tuple] = [("cor",)]
+        self.linhas: list[tuple] = [("cor",), ("nome",)]
         for gi in range(len(self.montagem.golpes)):
             self.linhas.append(("forma", gi))
             self.linhas += [("efeito", gi, k) for k in range(of.MAX_EFEITOS)]
@@ -56,6 +56,8 @@ class OficinaScene(IScene):
         linha, m = self.linhas[self.linha], self.montagem
         if linha[0] == "cor":
             m.cor = (m.cor + passo) % len(of.CORES)
+        elif linha[0] == "nome":
+            m.nome = (m.nome + passo) % len(of.NOMES)
         elif linha[0] == "forma":
             g = m.golpes[linha[1]]
             g.forma = OPCOES_FORMA[(OPCOES_FORMA.index(g.forma) + passo) % len(OPCOES_FORMA)]
@@ -153,6 +155,9 @@ class OficinaScene(IScene):
         m = self.montagem
         if linha[0] == "cor":
             return "Cor", ""
+        if linha[0] == "nome":
+            fim, kanji = of.NOMES[m.nome % len(of.NOMES)]
+            return "Nome", f"Técnica {fim}"
         if linha[0] == "forma":
             return "  forma", of.FORMAS[m.golpes[linha[1]].forma][0]
         if linha[0] == "efeito":

@@ -101,3 +101,7 @@ def test_o_titulo_comeca_a_rota_com_a_tecnica_escolhida():
 
 def test_quebrar_texto_nao_corta_palavra():
     assert quebrar("um dois tres quatro", 8) == ["um dois", "tres", "quatro"]
+
+
+def test_os_quatro_chefes_estao_na_rota():
+    assert {cid for cid, _ in DADOS.lutas} == {"vulcao", "mahito", "dagon", "sukuna"}
