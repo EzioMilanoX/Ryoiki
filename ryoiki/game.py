@@ -6,6 +6,7 @@ from ouroboros.bootstrap.composition_root import CompositionRoot
 from ouroboros.bootstrap.engine_config import EngineConfig
 from ouroboros.bootstrap.game_loop import GameLoop
 
+from ryoiki import sprites
 from ryoiki.movimento import DADOS
 from ryoiki.tela_arena import ALTURA, LARGURA
 from ryoiki.tela_oficina import OficinaScene
@@ -25,6 +26,13 @@ def build_game() -> GameLoop:
     )
     loop = CompositionRoot(config).build()
     loop.renderer.load_font(FONTE_PINCEL, str(DADOS / "fontes" / "YujiSyuku-Regular.ttf"))
+    sprites.carregar(loop.renderer)  # os chefes pintados (tools/gerar_sprites.py)
+    try:  # o ícone da janela e da barra de tarefas (o mesmo do atalho)
+        import pygame
+
+        pygame.display.set_icon(pygame.image.load(str(DADOS / "icone.png")))
+    except Exception:  # noqa: BLE001 — sem ícone o jogo roda igual
+        pass
 
     def lutar(arena) -> None:
         arena.ao_titulo = loop.pop_scene  # a pausa volta para o título

@@ -12,6 +12,7 @@ import math
 
 from ouroboros.bootstrap.scene import IScene
 
+from ryoiki import figuras as f
 from ryoiki import visual as v
 from ryoiki.chefe import carregar_chefe
 from ryoiki.movimento import DADOS
@@ -112,12 +113,7 @@ class TituloScene(IScene):
     # ------------------------------------------------------------------ desenho
 
     def render(self, world, r) -> None:
-        r.draw_ui_rect(0, 0, LARGURA, ALTURA, v.NOITE)
-        for i in range(24):  # a cortina do véu, ondulando
-            x = i * LARGURA / 24
-            alto = ALTURA * (0.5 + 0.08 * math.sin(self.relogio * 0.8 + i * 0.7))
-            r.draw_ui_rect(x, 0, LARGURA / 24 + 1, alto, v.a(v.VEU, 70 + (i % 2) * 20))
-        r.draw_ui_rect(0, 0, LARGURA, ALTURA, v.a(v.PRETO, 90))
+        v.fundo_titulo(r, LARGURA, ALTURA, self.relogio)
         r.draw_text(
             LARGURA / 2,
             92,
@@ -130,8 +126,8 @@ class TituloScene(IScene):
         r.draw_text(LARGURA / 2, 168, "R Y O I K I", 22, v.a(v.TINTA, 200), anchor="center")
         t, ch = self.tecnica, self.chefe
         # o duelo no meio: o feiticeiro de um lado, o chefe do outro
-        v.feiticeiro(r, 250, 300, 22, (1.0, 0.0), self.relogio, aura=0.7)
-        v.desenhar_chefe(ch.visual, r, LARGURA - 250, 300, 40, self.relogio, (-1.0, 0.0))
+        f.feiticeiro(r, 250, 345, 18, (1.0, 0.0), self.relogio, aura=0.7)
+        f.desenhar_chefe(ch.visual, r, LARGURA - 250, 345, 26, self.relogio, (-1.0, 0.0))
         r.draw_text(
             LARGURA / 2,
             300,
@@ -173,7 +169,7 @@ class TituloScene(IScene):
         r.draw_text(
             LARGURA / 2,
             ALTURA - 16,
-            "W/S escolhe a linha · A/D troca · Enter confirma · Esc sai",
+            "W/S escolhe a linha · A/D troca · Espaço confirma · Esc sai",
             12,
             v.a(v.TINTA, 110),
             anchor="center",

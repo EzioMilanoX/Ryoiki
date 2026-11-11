@@ -81,12 +81,14 @@ def test_o_fluxo_de_cenas_da_rota():
     assert "Recomeçar a luta" not in arena.opcoes  # na rota não dá para recomeçar
     arena.ao_fim(True, 50)
     assert isinstance(pilha[-1], RecompensaScene)
+    pilha[-1].relogio = 1.0  # passou a trava contra o Espaço da esquiva
     apertar(pilha[-1], e, "direita", "confirmar")
     arena2 = pilha[-1]
     assert isinstance(arena2, ArenaScene) and arena2.vitalidade.vida == 50 + DADOS.cura_entre_lutas
     assert arena2.dados_chefe.id == DADOS.lutas[1][0] and len(ctl.rota.escolhidas) == 1
     arena2.ao_fim(False, 0)
     assert isinstance(pilha[-1], ResultadoScene) and len(pilha) == 1
+    pilha[-1].relogio = 1.0
     apertar(pilha[-1], e, "confirmar")
     assert pilha == []
 

@@ -12,6 +12,7 @@ from dataclasses import dataclass, field, fields
 from pathlib import Path
 
 DADOS = Path(__file__).parent / "data"
+ESCALA_Y = 0.62  # a visão 3/4 (2.5D): o chão aparece achatado na vertical
 
 
 @dataclass(frozen=True)
@@ -134,12 +135,17 @@ class Camera:
         self.x += (alvo_x - self.x) * k
         self.y += (alvo_y - self.y) * k
         w, h = feel.arena
-        meio_w, meio_h = self.tela[0] / 2, self.tela[1] / 2
+        meio_w, meio_h = self.tela[0] / 2, self.tela[1] / 2 / ESCALA_Y
         self.x = min(max(self.x, meio_w), max(meio_w, w - meio_w))
         self.y = min(max(self.y, meio_h), max(meio_h, h - meio_h))
 
-    def tela_de(self, x: float, y: float) -> tuple[float, float]:
-        return x - self.x + self.tela[0] / 2, y - self.y + self.tela[1] / 2
+    def tela_de(self, x: float, y: float, z: float = 0.0) -> tuple[float, float]:
+        """Do mundo (chão em x, y; altura z) para a tela, na visão 3/4."""
+        return (
+            x - self.x + self.tela[0] / 2,
+            (y - self.y) * ESCALA_Y - z + self.tela[1] / 2,
+        )
 
     def mundo_de(self, sx: float, sy: float) -> tuple[float, float]:
-        return sx + self.x - self.tela[0] / 2, sy + self.y - self.tela[1] / 2
+        """Da tela para o chão (o cursor aponta para um ponto do chão)."""
+        return sx + self.x - self.tela[0] / 2, (sy - self.tela[1] / 2) / ESCALA_Y + self.y

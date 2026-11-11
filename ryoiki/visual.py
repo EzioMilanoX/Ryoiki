@@ -1,5 +1,6 @@
-"""A cara do Ryoiki: chão de concreto rachado, selos, véu, o feiticeiro visto de cima,
-a maldição e os efeitos (faíscas de tinta, o Clarão Negro, números).
+"""A cara do Ryoiki na visão 3/4 (2.5D): chão de concreto rachado em perspectiva, selos,
+véu com a parede do fundo, avisos no chão, HUD e efeitos (faíscas de tinta, o Clarão Negro,
+números). As figuras em pé ficam em `figuras.py`.
 
 Tudo com as primitivas de UI do renderer, em coordenadas de tela. Nada de círculo em
 grade: o chão é uma rua à noite dentro de uma cortina, e as figuras têm corpo.
@@ -10,6 +11,8 @@ from __future__ import annotations
 import math
 import random
 from dataclasses import dataclass
+
+from ryoiki.movimento import ESCALA_Y
 
 FONTE_PINCEL = 1  # a Yuji Syuku (game.py a carrega)
 
@@ -107,22 +110,22 @@ def desenhar_chao(r, cam, arena, cenario: Cenario, relogio: float, tela) -> None
         k += 1
     k = 1
     while k * LADO_PLACA < h:
-        y = y0 + k * LADO_PLACA
+        y = y0 + k * LADO_PLACA * ESCALA_Y
         if 0 <= y <= lh:
             r.draw_ui_line(max(0, x0), y, min(lw, x1), y, JUNTA, 2)
         k += 1
     for cx, cy, raio in cenario.selos:  # selos de contenção, quase apagados
         sx, sy = cam.tela_de(cx, cy)
         if -raio < sx < lw + raio and -raio < sy < lh + raio:
-            r.draw_ui_circle(sx, sy, raio, a(SELO, 34), 2)
-            r.draw_ui_circle(sx, sy, raio * 0.78, a(SELO, 24), 1)
+            oval(r, sx, sy, raio, a(SELO, 34), 2)
+            oval(r, sx, sy, raio * 0.78, a(SELO, 24), 1)
             for i in range(8):
                 t = i * math.pi / 4 + relogio * 0.05
                 r.draw_ui_line(
                     sx + math.cos(t) * raio * 0.78,
-                    sy + math.sin(t) * raio * 0.78,
+                    sy + math.sin(t) * raio * 0.78 * ESCALA_Y,
                     sx + math.cos(t) * raio,
-                    sy + math.sin(t) * raio,
+                    sy + math.sin(t) * raio * ESCALA_Y,
                     a(SELO, 30),
                     1,
                 )
@@ -137,7 +140,8 @@ def desenhar_chao(r, cam, arena, cenario: Cenario, relogio: float, tela) -> None
     for cx, cy, raio in cenario.manchas:
         sx, sy = cam.tela_de(cx, cy)
         if -30 < sx < lw + 30 and -30 < sy < lh + 30:
-            r.draw_ui_circle(sx, sy, raio, a(RACHADURA, 150))
+            oval(r, sx, sy, raio, a(RACHADURA, 150))
+    parede_do_fundo(r, x0, y0, x1, relogio)
     _veu(r, x0, y0, x1, y1, relogio, tela)
 
 
@@ -195,107 +199,6 @@ def poeira(r, cam, arena, relogio, tela) -> None:
 
 
 # ------------------------------------------------------------------- as figuras
-
-
-def feiticeiro(
-    r, sx, sy, raio, mira, relogio, *, punho=None, aura=0.0, zona=False, invencivel=False
-) -> None:
-    """Visto de cima: sombra, ombros do uniforme, braços, cabeça e cabelo, e a aura.
-
-    `punho`: None, ou (lado, extensao 0..1): o braço que golpeia estica para a mira.
-    """
-    raio *= 1.35  # a figura é maior que a caixa de colisão: lê melhor na tela
-    ang = math.atan2(mira[1], mira[0])
-    px, py = -mira[1], mira[0]  # a perpendicular (os ombros)
-    r.draw_ui_polygon(elipse(sx + 4, sy + 7, raio * 1.15, raio * 0.85, ang), a(PRETO, 130))
-    if aura > 0 or zona:  # a energia em volta do corpo
-        cor = SANGUE if zona else ENERGIA
-        for i in range(3):
-            tremor = math.sin(relogio * 17 + i * 2.1) * 2.5
-            alfa = (60 + 50 * aura) / (i + 1)
-            rx, ry = raio * (1.3 + 0.16 * i) + tremor, raio * (1.1 + 0.16 * i) + tremor
-            r.draw_ui_polygon(elipse(sx, sy, ry, rx, ang), a(cor, alfa), 2)
-    for lado in (-1, 1):  # os braços: manga escura com contorno claro e o punho
-        ext = 0.0
-        if punho is not None and punho[0] in (lado, 0):
-            ext = punho[1]
-        bx = sx + px * lado * raio * 0.8 + mira[0] * (raio * 0.3 + ext * raio * 1.5)
-        by = sy + py * lado * raio * 0.8 + mira[1] * (raio * 0.3 + ext * raio * 1.5)
-        ox, oy = sx + px * lado * raio * 0.62, sy + py * lado * raio * 0.62
-        largura = int(raio * 0.42)
-        r.draw_ui_line(ox, oy, bx, by, CONTORNO, largura + 4)
-        r.draw_ui_line(ox, oy, bx, by, UNIFORME, largura)
-        r.draw_ui_circle(bx, by, raio * 0.24, CONTORNO)
-        r.draw_ui_circle(bx, by, raio * 0.2, PELE)
-        if ext > 0.6:
-            r.draw_ui_circle(bx, by, raio * 0.4, a(SANGUE if zona else ENERGIA, 170), 2)
-    corpo = UNIFORME_BORDA if invencivel else UNIFORME
-    ombros = elipse(sx, sy, raio * 0.5, raio * 0.95, ang)
-    r.draw_ui_polygon(ombros, corpo)
-    r.draw_ui_polygon(ombros, CONTORNO, 2)
-    # a gola branca da camisa, na frente
-    r.draw_ui_arc(
-        sx + mira[0] * raio * 0.1,
-        sy + mira[1] * raio * 0.1,
-        raio * 0.42,
-        ang - 1.0,
-        ang + 1.0,
-        CAMISA,
-        3,
-    )
-    # a cabeça: cabelo espetado visto de cima, com o rosto aparecendo na frente
-    hx, hy = sx + mira[0] * raio * 0.08, sy + mira[1] * raio * 0.08
-    r.draw_ui_circle(hx + mira[0] * raio * 0.12, hy + mira[1] * raio * 0.12, raio * 0.36, PELE)
-    espetos = []
-    for i in range(14):
-        t = ang + math.pi * 0.35 + (2 * math.pi - math.pi * 0.7) * i / 13
-        rr = raio * (0.46 if i % 2 else 0.34)
-        espetos.append(
-            (
-                hx - mira[0] * raio * 0.05 + math.cos(t) * rr,
-                hy - mira[1] * raio * 0.05 + math.sin(t) * rr,
-            )
-        )
-    espetos.append((hx + mira[0] * raio * 0.1, hy + mira[1] * raio * 0.1))
-    r.draw_ui_polygon(espetos, CABELO)
-    r.draw_ui_polygon(espetos, CONTORNO, 1)
-
-
-def maldicao(r, sx, sy, raio, relogio, olhar, *, ferido=False, vida=1.0) -> None:
-    """Uma maldição de treino: massa disforme que pulsa, com um olho só e uma boca torta."""
-    pts = []
-    for i in range(22):
-        t = 2 * math.pi * i / 22
-        rr = raio * (
-            1 + 0.12 * math.sin(t * 3 + relogio * 3.1) + 0.07 * math.sin(t * 7 - relogio * 5)
-        )
-        pts.append((sx + math.cos(t) * rr, sy + math.sin(t) * rr * 0.9))
-    r.draw_ui_polygon(elipse(sx + 5, sy + 8, raio * 1.1, raio * 0.75), a(PRETO, 110))
-    r.draw_ui_polygon(pts, TINTA if ferido else MALDICAO)
-    r.draw_ui_polygon(pts, MALDICAO_BORDA, 2)
-    for i in range(4):  # os braços curtos que se mexem
-        t = i * math.pi / 2 + 0.5 + math.sin(relogio * 2 + i) * 0.3
-        r.draw_ui_line(
-            sx + math.cos(t) * raio * 0.9,
-            sy + math.sin(t) * raio * 0.9,
-            sx + math.cos(t) * raio * 1.45,
-            sy + math.sin(t) * raio * 1.45,
-            MALDICAO_BORDA,
-            4,
-        )
-    ex, ey = sx + olhar[0] * raio * 0.15, sy - raio * 0.2 + olhar[1] * raio * 0.15
-    r.draw_ui_circle(ex, ey, raio * 0.36, (235, 228, 210, 255))
-    r.draw_ui_circle(ex + olhar[0] * raio * 0.14, ey + olhar[1] * raio * 0.14, raio * 0.17, OLHO)
-    r.draw_ui_circle(ex + olhar[0] * raio * 0.17, ey + olhar[1] * raio * 0.17, raio * 0.07, PRETO)
-    boca = [
-        (sx - raio * 0.45 + k * raio * 0.15, sy + raio * 0.38 + (k % 2) * raio * 0.12)
-        for k in range(7)
-    ]
-    for p, q in zip(boca, boca[1:], strict=False):
-        r.draw_ui_line(p[0], p[1], q[0], q[1], PRETO, 2)
-    largura = raio * 2
-    r.draw_ui_rect(sx - raio, sy - raio * 1.55, largura, 4, a(PRETO, 160))
-    r.draw_ui_rect(sx - raio, sy - raio * 1.55, largura * vida, 4, SANGUE)
 
 
 # ------------------------------------------------------------------- os efeitos
@@ -357,38 +260,6 @@ def efeitos_do_impacto(imp, rng: random.Random) -> list[Efeito]:
     return out
 
 
-def desenhar_efeito(r, cam, e: Efeito) -> None:
-    k = e.t / e.vida
-    sx, sy = cam.tela_de(e.x, e.y)
-    if e.tipo == "faisca":
-        cauda = 0.03
-        r.draw_ui_line(sx, sy, sx - e.vx * cauda, sy - e.vy * cauda, a(e.cor, 255 * (1 - k)), 2)
-    elif e.tipo == "onda":
-        r.draw_ui_circle(sx, sy, 10 + e.raio * k, a(e.cor, 160 * (1 - k)), 2)
-    elif e.tipo == "linha":  # o rastro de um corte, sumindo
-        p1, p2 = cam.tela_de(*e.pts[0]), cam.tela_de(*e.pts[1])
-        r.draw_ui_line(
-            p1[0], p1[1], p2[0], p2[1], a(e.cor, 230 * (1 - k)), max(1, int(6 * (1 - k)))
-        )
-        r.draw_ui_line(p1[0], p1[1], p2[0], p2[1], a(TINTA, 255 * (1 - k)), 1)
-    elif e.tipo == "raio":
-        pts = [cam.tela_de(x, y) for x, y in e.pts]
-        for p, q in zip(pts, pts[1:], strict=False):
-            r.draw_ui_line(p[0], p[1], q[0], q[1], a(SANGUE, 230 * (1 - k)), 7)
-            r.draw_ui_line(p[0], p[1], q[0], q[1], a(PRETO, 255 * (1 - k)), 3)
-    elif e.tipo == "numero":
-        grande = len(e.texto) and e.vida > 0.6
-        r.draw_text(
-            sx,
-            sy,
-            e.texto,
-            30 if grande else 20,
-            a(SANGUE if grande else e.cor, 255 * (1 - k * k)),
-            anchor="center",
-            font_id=FONTE_PINCEL,
-        )
-
-
 def mover_efeito(e: Efeito, dt: float) -> None:
     e.t += dt
     e.x += e.vx * dt
@@ -433,72 +304,19 @@ def efeitos_da_tecnica(ac, cor, rng: random.Random) -> list[Efeito]:
     return out
 
 
-def projetil(r, cam, p, cor) -> None:
-    sx, sy = cam.tela_de(p.x, p.y)
-    for k in (3, 2, 1):  # o rastro: círculos que somem para trás
-        d = k * p.raio * 1.1
-        r.draw_ui_circle(sx - p.dx * d, sy - p.dy * d, p.raio * (1 - k * 0.2), a(cor, 50 * (4 - k)))
-    r.draw_ui_circle(sx, sy, p.raio + 3, a(cor, 200))
-    r.draw_ui_circle(sx, sy, p.raio * 0.6, TINTA)
-
-
 def area_pendente(r, cam, ar, cor, relogio) -> None:
     """O aviso da área: um anel que fecha até a hora de explodir."""
     if ar.raio < 0:
         return
     sx, sy = cam.tela_de(ar.x, ar.y)
     k = 1 - ar.t / ar.atraso if ar.atraso > 0 else 1.0
-    r.draw_ui_circle(sx, sy, ar.raio, a(cor, 40 + 60 * k))
-    r.draw_ui_circle(sx, sy, ar.raio, a(cor, 200), 2)
-    r.draw_ui_circle(sx, sy, ar.raio * (1 - k) + 6, a(cor, 220), 3)
+    oval(r, sx, sy, ar.raio, a(cor, 40 + 60 * k))
+    oval(r, sx, sy, ar.raio, a(cor, 200), 2)
+    oval(r, sx, sy, ar.raio * (1 - k) + 6, a(cor, 220), 3)
     for i in range(6):  # a espiral sendo sugada para o centro
         t = relogio * 9 + i * math.pi / 3
         rr = ar.raio * (1 - k) * 0.9 + 8
-        r.draw_ui_circle(sx + math.cos(t) * rr, sy + math.sin(t) * rr, 3, a(TINTA, 200))
-
-
-def marca(r, sx, sy, raio, relogio, cor) -> None:
-    """O prego cravado: um losango que pisca sobre o alvo marcado."""
-    y = sy - raio * 1.9 + math.sin(relogio * 6) * 2
-    pts = [(sx, y - 7), (sx + 5, y), (sx, y + 7), (sx - 5, y)]
-    r.draw_ui_polygon(pts, a(cor, 230))
-    r.draw_ui_circle(sx, sy, raio * 1.25, a(cor, 90 + 60 * math.sin(relogio * 8)), 1)
-
-
-def atordoado(r, sx, sy, raio, relogio) -> None:
-    for i in range(3):
-        t = relogio * 5 + i * 2.1
-        r.draw_ui_circle(
-            sx + math.cos(t) * raio * 0.9, sy - raio * 1.2 + math.sin(t) * 4, 3, a(OLHO, 220)
-        )
-
-
-def aviso_pancada(r, sx, sy, raio, carga) -> None:
-    """A pancada da maldição sendo carregada: o círculo vermelho enche até estourar."""
-    r.draw_ui_circle(sx, sy, raio, a(SANGUE, 30 + 50 * carga))
-    r.draw_ui_circle(sx, sy, raio, a(SANGUE, 200), 2)
-    r.draw_ui_circle(sx, sy, raio * carga, a(SANGUE, 90))
-
-
-def escudo(r, sx, sy, raio, relogio, bloqueou: bool) -> None:
-    """O reforço: o corpo coberto de energia (acende quando segura um golpe)."""
-    rr = raio * 1.35 * 1.25
-    alfa = 220 if bloqueou else 120
-    pts = []
-    for i in range(6):
-        t = i * math.pi / 3 + relogio * 0.8
-        pts.append((sx + math.cos(t) * rr, sy + math.sin(t) * rr))
-    r.draw_ui_polygon(pts, a(ENERGIA, 35 if not bloqueou else 90))
-    r.draw_ui_polygon(pts, a(ENERGIA, alfa), 2)
-
-
-def reversa(r, sx, sy, raio, relogio) -> None:
-    """A Técnica Reversa: energia clara subindo do corpo."""
-    for i in range(5):
-        k = (relogio * 1.6 + i / 5) % 1
-        x = sx + math.sin(i * 2.4 + relogio * 3) * raio * 0.9
-        r.draw_ui_circle(x, sy + raio - k * raio * 3, 3 + 2 * (1 - k), a(CURA, 220 * (1 - k)))
-    r.draw_ui_circle(sx, sy, raio * 1.6 + math.sin(relogio * 10) * 2, a(CURA, 110), 2)
+        oval(r, sx + math.cos(t) * rr, sy + math.sin(t) * rr, 3, a(TINTA, 200))
 
 
 # --------------------------------------------------------------- o chefe (passo 4)
@@ -507,56 +325,6 @@ ROCHA = (58, 50, 50, 255)
 ROCHA_BORDA = (110, 92, 86, 255)
 LAVA = (255, 120, 30, 255)
 LAVA_CLARA = (255, 210, 120, 255)
-
-
-def chefe_vulcao(r, sx, sy, raio, relogio, olhar, *, ferido=False, queimado=False) -> None:
-    """Visto de cima: um corpo de rocha com uma cratera de lava no alto da cabeça e um olho."""
-    r.draw_ui_polygon(elipse(sx + 7, sy + 10, raio * 1.25, raio * 0.9), a(PRETO, 140))
-    ang = math.atan2(olhar[1], olhar[0])
-    px, py = -olhar[1], olhar[0]
-    for lado in (-1, 1):  # os braços grossos
-        bx = sx + px * lado * raio * 1.0 + olhar[0] * raio * 0.5
-        by = sy + py * lado * raio * 1.0 + olhar[1] * raio * 0.5
-        r.draw_ui_line(
-            sx + px * lado * raio * 0.7,
-            sy + py * lado * raio * 0.7,
-            bx,
-            by,
-            ROCHA_BORDA,
-            int(raio * 0.5) + 4,
-        )
-        r.draw_ui_line(
-            sx + px * lado * raio * 0.7, sy + py * lado * raio * 0.7, bx, by, ROCHA, int(raio * 0.5)
-        )
-        r.draw_ui_circle(bx, by, raio * 0.3, ROCHA_BORDA)
-    pts = []
-    for i in range(16):  # o corpo: um bloco de rocha irregular
-        t = 2 * math.pi * i / 16
-        rr = raio * (1 + 0.08 * math.sin(t * 5 + 1.3))
-        pts.append((sx + math.cos(t) * rr, sy + math.sin(t) * rr))
-    r.draw_ui_polygon(pts, TINTA if ferido else ROCHA)
-    r.draw_ui_polygon(pts, ROCHA_BORDA, 3)
-    # a cratera: um cone visto de cima, com a lava pulsando lá dentro
-    cx, cy = sx - olhar[0] * raio * 0.15, sy - olhar[1] * raio * 0.15
-    pulso = 0.5 + 0.5 * math.sin(relogio * 6)
-    r.draw_ui_circle(cx, cy, raio * 0.62, ROCHA_BORDA)
-    r.draw_ui_circle(cx, cy, raio * 0.48, (40, 20, 18, 255))
-    lava = (90, 90, 90, 255) if queimado else LAVA
-    r.draw_ui_circle(cx, cy, raio * (0.3 + 0.06 * pulso), lava)
-    if not queimado:
-        r.draw_ui_circle(cx, cy, raio * 0.14, LAVA_CLARA)
-    for i in range(3):  # a fumaça subindo
-        k = (relogio * 0.7 + i / 3) % 1
-        r.draw_ui_circle(
-            cx + math.sin(relogio + i * 2) * 8,
-            cy - k * raio * 1.6,
-            raio * (0.15 + 0.25 * k),
-            a((70, 64, 66, 255), 150 * (1 - k)),
-        )
-    # o olho, na frente
-    ex, ey = sx + olhar[0] * raio * 0.62, sy + olhar[1] * raio * 0.62
-    r.draw_ui_polygon(elipse(ex, ey, raio * 0.2, raio * 0.3, ang), (235, 228, 210, 255))
-    r.draw_ui_circle(ex + olhar[0] * 3, ey + olhar[1] * 3, raio * 0.12, PRETO)
 
 
 def aviso_investida(r, cam, x, y, direcao, alcance, largura, k, cor=LAVA) -> None:
@@ -580,40 +348,9 @@ def aviso_investida(r, cam, x, y, direcao, alcance, largura, k, cor=LAVA) -> Non
 def aviso_erupcao(r, cam, e, cor=LAVA) -> None:
     sx, sy = cam.tela_de(e.x, e.y)
     k = 1 - e.t / e.atraso if e.atraso > 0 else 1.0
-    r.draw_ui_circle(sx, sy, e.raio, a(cor, 30 + 60 * k))
-    r.draw_ui_circle(sx, sy, e.raio, a(cor, 210), 2)
-    r.draw_ui_circle(sx, sy, e.raio * k, a(cor, 110))
-
-
-def brasa(r, cam, b, relogio, cor=LAVA) -> None:
-    sx, sy = cam.tela_de(b.x, b.y)
-    v = math.hypot(b.vx, b.vy) or 1
-    for k in (3, 2, 1):
-        d = k * b.raio * 0.9
-        r.draw_ui_circle(
-            sx - b.vx / v * d, sy - b.vy / v * d, b.raio * (1 - k * 0.22), a(cor, 60 * (4 - k))
-        )
-    r.draw_ui_circle(sx, sy, b.raio, cor)
-    r.draw_ui_circle(sx, sy, b.raio * (0.45 + 0.15 * math.sin(relogio * 30)), LAVA_CLARA)
-
-
-def entoando(r, sx, sy, raio, k, dano_frac, cor=LAVA) -> None:
-    """A entoação do domínio: anéis fechando no chefe e a barra do que falta para cortar."""
-    for i in range(3):
-        rr = raio * (1.4 + (1 - k) * (2.5 + i))
-        r.draw_ui_circle(sx, sy, rr, a(cor, 90 + 50 * k), 2)
-    r.draw_text(
-        sx,
-        sy - raio * 2.4,
-        "領域展開",
-        26,
-        a(LAVA_CLARA, 240),
-        anchor="center",
-        font_id=FONTE_PINCEL,
-    )
-    w = raio * 3
-    r.draw_ui_rect(sx - w / 2, sy - raio * 1.85, w, 5, a(PRETO, 180))
-    r.draw_ui_rect(sx - w / 2, sy - raio * 1.85, w * min(1.0, dano_frac), 5, TINTA)
+    oval(r, sx, sy, e.raio, a(cor, 30 + 60 * k))
+    oval(r, sx, sy, e.raio, a(cor, 210), 2)
+    oval(r, sx, sy, e.raio * k, a(cor, 110))
 
 
 def dominio_tela(r, tela, relogio, forca: float, cor=LAVA) -> None:
@@ -677,99 +414,12 @@ def choque_tela(r, tela, relogio, frac: float, cor) -> None:
         r.draw_ui_line(p[0], p[1], q[0], q[1], a(TINTA, 220), 3)
 
 
-def dominio_simples(r, sx, sy, raio, relogio) -> None:
-    """O Domínio Simples: um círculo no chão com marcas, em volta do pé."""
-    rr = raio * 4.2
-    r.draw_ui_circle(sx, sy, rr, a(TINTA, 25))
-    r.draw_ui_circle(sx, sy, rr, a(TINTA, 200), 2)
-    for i in range(16):
-        t = i * math.pi / 8 + relogio * 0.5
-        x1, y1 = sx + math.cos(t) * rr, sy + math.sin(t) * rr
-        x2, y2 = sx + math.cos(t) * (rr - 8), sy + math.sin(t) * (rr - 8)
-        r.draw_ui_line(x1, y1, x2, y2, a(TINTA, 200), 2)
-
-
 # ------------------------------------------------------- o segundo chefe (v1, passo 2)
 
 PELE_REMENDO = (170, 196, 214, 255)
 PELE_REMENDO_2 = (130, 158, 182, 255)
 CABELO_REMENDO = (70, 92, 120, 255)
 COSTURA = (40, 34, 50, 255)
-
-
-def chefe_remendos(r, sx, sy, raio, relogio, olhar, *, ferido=False, queimado=False) -> None:
-    """Visto de cima: um corpo humano feito de retalhos costurados, cabelo comprido caído
-    para trás e braços que mudam de forma (um deles vira lâmina)."""
-    raio *= 1.4
-    ang = math.atan2(olhar[1], olhar[0])
-    px, py = -olhar[1], olhar[0]
-    r.draw_ui_polygon(elipse(sx + 5, sy + 8, raio * 1.1, raio * 0.8, ang), a(PRETO, 130))
-    for lado in (-1, 1):  # os braços: o direito é uma lâmina que pulsa
-        ox, oy = sx + px * lado * raio * 0.7, sy + py * lado * raio * 0.7
-        if lado == 1:
-            k = 1.3 + 0.2 * math.sin(relogio * 4)
-            ponta = (ox + olhar[0] * raio * k * 1.4, oy + olhar[1] * raio * k * 1.4)
-            base1 = (ox + px * raio * 0.18, oy + py * raio * 0.18)
-            base2 = (ox - px * raio * 0.18, oy - py * raio * 0.18)
-            r.draw_ui_polygon([base1, ponta, base2], PELE_REMENDO_2)
-            r.draw_ui_polygon([base1, ponta, base2], COSTURA, 1)
-        else:
-            bx, by = ox + olhar[0] * raio * 0.6, oy + olhar[1] * raio * 0.6
-            r.draw_ui_line(ox, oy, bx, by, COSTURA, int(raio * 0.36) + 3)
-            r.draw_ui_line(ox, oy, bx, by, PELE_REMENDO, int(raio * 0.36))
-            r.draw_ui_circle(bx, by, raio * 0.2, PELE_REMENDO)
-    ombros = elipse(sx, sy, raio * 0.48, raio * 0.92, ang)
-    r.draw_ui_polygon(ombros, TINTA if ferido else (36, 40, 52, 255))
-    r.draw_ui_polygon(ombros, PELE_REMENDO_2, 2)
-    # a cabeça: pele de retalhos e o cabelo comprido escorrendo para trás
-    hx, hy = sx + olhar[0] * raio * 0.1, sy + olhar[1] * raio * 0.1
-    for i in range(7):
-        t = ang + math.pi + (i - 3) * 0.22
-        comp = raio * (0.9 + 0.12 * math.sin(relogio * 2 + i))
-        r.draw_ui_line(hx, hy, hx + math.cos(t) * comp, hy + math.sin(t) * comp, CABELO_REMENDO, 4)
-    r.draw_ui_circle(hx, hy, raio * 0.36, PELE_REMENDO)
-    r.draw_ui_circle(hx, hy, raio * 0.36, COSTURA, 1)
-    for k in (-1, 1):  # as costuras atravessando o rosto
-        x1 = hx + px * raio * 0.3 * k - olhar[0] * raio * 0.2
-        y1 = hy + py * raio * 0.3 * k - olhar[1] * raio * 0.2
-        x2 = hx + olhar[0] * raio * 0.3 + px * raio * 0.05 * k
-        y2 = hy + olhar[1] * raio * 0.3 + py * raio * 0.05 * k
-        r.draw_ui_line(x1, y1, x2, y2, COSTURA, 2)
-    if queimado:
-        r.draw_ui_circle(hx, hy, raio * 0.5, a(PRETO, 120))
-
-
-def transfigurado(r, sx, sy, raio, relogio, *, ferido=False, vida=1.0) -> None:
-    """Um humano transfigurado: massa pálida e torta, membros a mais, uma boca aberta."""
-    pts = []
-    for i in range(14):
-        t = 2 * math.pi * i / 14
-        rr = raio * (1 + 0.25 * math.sin(t * 3 + relogio * 6) + 0.1 * math.sin(t * 5))
-        pts.append((sx + math.cos(t) * rr, sy + math.sin(t) * rr))
-    r.draw_ui_polygon(elipse(sx + 3, sy + 5, raio, raio * 0.7), a(PRETO, 110))
-    r.draw_ui_polygon(pts, TINTA if ferido else PELE_REMENDO_2)
-    r.draw_ui_polygon(pts, COSTURA, 2)
-    for i in range(5):
-        t = i * 1.3 + math.sin(relogio * 8 + i) * 0.4
-        r.draw_ui_line(
-            sx + math.cos(t) * raio * 0.8,
-            sy + math.sin(t) * raio * 0.8,
-            sx + math.cos(t) * raio * 1.6,
-            sy + math.sin(t) * raio * 1.6,
-            PELE_REMENDO,
-            3,
-        )
-    r.draw_ui_circle(sx, sy, raio * 0.35, COSTURA)
-    if vida < 1:
-        r.draw_ui_rect(sx - raio, sy - raio * 1.8, raio * 2, 3, a(PRETO, 160))
-        r.draw_ui_rect(sx - raio, sy - raio * 1.8, raio * 2 * vida, 3, SANGUE)
-
-
-DESENHOS_CHEFE = {"vulcao": chefe_vulcao, "remendos": chefe_remendos}
-
-
-def desenhar_chefe(visual, r, sx, sy, raio, relogio, olhar, **kw) -> None:
-    DESENHOS_CHEFE.get(visual, chefe_vulcao)(r, sx, sy, raio, relogio, olhar, **kw)
 
 
 # ------------------------------------------------------- o terceiro chefe (v1, passo 6)
@@ -780,63 +430,12 @@ CABELO_REI = (232, 150, 160, 255)
 QUIMONO = (236, 232, 226, 255)
 
 
-def chefe_rei(r, sx, sy, raio, relogio, olhar, *, ferido=False, queimado=False) -> None:
-    """Visto de cima: quatro braços, quimono claro, cabelo rosa espetado e as marcas pretas."""
-    raio *= 1.75
-    ang = math.atan2(olhar[1], olhar[0])
-    px, py = -olhar[1], olhar[0]
-    r.draw_ui_polygon(elipse(sx + 5, sy + 8, raio * 1.15, raio * 0.85, ang), a(PRETO, 140))
-    for par, (frente, abre) in enumerate(((0.55, 0.85), (0.05, 1.05))):  # os 4 braços
-        for lado in (-1, 1):
-            ox, oy = sx + px * lado * raio * 0.6, sy + py * lado * raio * 0.6
-            balanco = math.sin(relogio * 3 + par + lado) * 0.08
-            bx = sx + px * lado * raio * abre + olhar[0] * raio * (frente + balanco)
-            by = sy + py * lado * raio * abre + olhar[1] * raio * (frente + balanco)
-            r.draw_ui_line(ox, oy, bx, by, TATUAGEM, int(raio * 0.36) + 4)
-            r.draw_ui_line(ox, oy, bx, by, PELE_REI, int(raio * 0.36))
-            r.draw_ui_circle(bx, by, raio * 0.17, PELE_REI)
-            r.draw_ui_line(  # a faixa tatuada no antebraço
-                ox + (bx - ox) * 0.55 - px * 3,
-                oy + (by - oy) * 0.55 - py * 3,
-                ox + (bx - ox) * 0.55 + px * 3,
-                oy + (by - oy) * 0.55 + py * 3,
-                TATUAGEM,
-                2,
-            )
-    ombros = elipse(sx, sy, raio * 0.5, raio * 0.95, ang)
-    r.draw_ui_polygon(ombros, TINTA if ferido else QUIMONO)
-    r.draw_ui_polygon(ombros, TATUAGEM, 2)
-    r.draw_ui_line(  # a gola cruzada do quimono
-        sx + olhar[0] * raio * 0.45 - px * raio * 0.3,
-        sy + olhar[1] * raio * 0.45 - py * raio * 0.3,
-        sx + px * raio * 0.1,
-        sy + py * raio * 0.1,
-        TATUAGEM,
-        2,
-    )
-    hx, hy = sx + olhar[0] * raio * 0.08, sy + olhar[1] * raio * 0.08
-    espetos = []
-    for i in range(16):
-        t = 2 * math.pi * i / 16
-        rr = raio * (0.46 if i % 2 else 0.32)
-        espetos.append((hx + math.cos(t) * rr, hy + math.sin(t) * rr))
-    r.draw_ui_polygon(espetos, (120, 120, 120, 255) if queimado else CABELO_REI)
-    r.draw_ui_polygon(espetos, TATUAGEM, 1)
-    fx, fy = hx + olhar[0] * raio * 0.32, hy + olhar[1] * raio * 0.32
-    r.draw_ui_circle(fx, fy, raio * 0.16, PELE_REI)
-    for k in (-1, 1):  # os dois pares de olhos, o de baixo é a marca
-        r.draw_ui_circle(fx + px * k * raio * 0.08, fy + py * k * raio * 0.08, 2, SANGUE)
-
-
 def aviso_corte(r, cam, c, cor) -> None:
     """O aviso do corte: uma linha fina que engrossa até cortar."""
     k = 1 - c.t / c.atraso if c.atraso > 0 else 1.0
     p1, p2 = cam.tela_de(c.x1, c.y1), cam.tela_de(c.x2, c.y2)
     r.draw_ui_line(p1[0], p1[1], p2[0], p2[1], a(cor, 40 + 60 * k), max(1, int(c.largura * k)))
     r.draw_ui_line(p1[0], p1[1], p2[0], p2[1], a(TINTA, 120 + 120 * k), 1)
-
-
-DESENHOS_CHEFE["rei"] = chefe_rei
 
 
 # ------------------------------------------------------------- o quarto chefe (v1, passo 7)
@@ -846,37 +445,263 @@ CARNE_ABISMO_2 = (104, 44, 44, 255)
 AGUA = (60, 170, 190, 255)
 
 
-def chefe_abismo(r, sx, sy, raio, relogio, olhar, *, ferido=False, queimado=False) -> None:
-    """Visto de cima: uma cabeça bulbosa de polvo, tentáculos ondulando e um anel de água."""
-    ang = math.atan2(olhar[1], olhar[0])
-    r.draw_ui_polygon(elipse(sx + 6, sy + 9, raio * 1.3, raio * 1.0), a(PRETO, 130))
-    if not queimado:
-        onda = raio * (1.5 + 0.08 * math.sin(relogio * 3))
-        r.draw_ui_circle(sx, sy, onda, a(AGUA, 70), 2)
-    for i in range(8):  # os tentáculos, cada um uma linha quebrada que ondula
-        base = ang + math.pi + (i - 3.5) * 0.42
-        x, y = sx + math.cos(base) * raio * 0.7, sy + math.sin(base) * raio * 0.7
-        pts = [(x, y)]
-        for k in range(4):
-            t = base + math.sin(relogio * 3 + i + k) * 0.35
-            x += math.cos(t) * raio * 0.32
-            y += math.sin(t) * raio * 0.32
-            pts.append((x, y))
-        for p, q in zip(pts, pts[1:], strict=False):
-            r.draw_ui_line(p[0], p[1], q[0], q[1], CARNE_ABISMO_2, 7)
-            r.draw_ui_line(p[0], p[1], q[0], q[1], CARNE_ABISMO, 4)
-    r.draw_ui_polygon(
-        elipse(sx, sy, raio * 0.95, raio * 1.1, ang), TINTA if ferido else CARNE_ABISMO
+# ------------------------------------------------------ o acabamento (barras, luz, tinta)
+
+
+def clarear(cor, k: float) -> tuple[int, int, int, int]:
+    return (*(int(c + (255 - c) * k) for c in cor[:3]), cor[3] if len(cor) > 3 else 255)
+
+
+def barra(r, x, y, w, h, frac, cor, *, fantasma=None, inclinacao=6) -> None:
+    """Barra inclinada: fundo, o rastro claro do dano recente, o valor, um brilho e a borda."""
+    frac = max(0.0, min(1.0, frac))
+
+    def para(x0, x1, y0, y1, c, largura=0):
+        pts = [(x0 + inclinacao, y0), (x1 + inclinacao, y0), (x1, y1), (x0, y1)]
+        r.draw_ui_polygon(pts, c, largura)
+
+    para(x - 3, x + w + 3, y - 3, y + h + 3, a(PRETO, 200))
+    if fantasma is not None and fantasma > frac:
+        para(x + w * frac, x + w * min(1.0, fantasma), y, y + h, a(TINTA, 210))
+    if frac > 0:
+        para(x, x + w * frac, y, y + h, cor)
+        para(x, x + w * frac, y, y + max(2, h * 0.35), a(clarear(cor, 0.45), 220))
+    para(x - 3, x + w + 3, y - 3, y + h + 3, a(clarear(cor, 0.2), 150), 1)
+
+
+@dataclass
+class Mancha:
+    """Tinta que fica no chão depois de um acerto."""
+
+    x: float
+    y: float
+    pts: tuple  # relativos ao centro
+    cor: tuple
+
+
+def nova_mancha(rng: random.Random, x, y, raio, cor) -> Mancha:
+    pts = []
+    n = 11
+    for i in range(n):
+        t = 2 * math.pi * i / n
+        rr = raio * rng.uniform(0.55, 1.15)
+        pts.append((math.cos(t) * rr, math.sin(t) * rr * 0.8))
+    for _ in range(2):  # respingos soltos
+        t, d = rng.uniform(0, 2 * math.pi), raio * rng.uniform(1.3, 2.0)
+        pts.append((math.cos(t) * d, math.sin(t) * d))
+    return Mancha(x, y, tuple(pts), cor)
+
+
+def fundo_titulo(r, w, h, relogio) -> None:
+    """A noite de Tóquio vista de longe: céu em degradê, lua, prédios com janelas e névoa."""
+    for i in range(24):  # o céu: do roxo do véu, embaixo, ao preto, em cima
+        k = i / 23
+        cor = (int(10 + 34 * k), int(9 + 8 * k), int(13 + 46 * k), 255)
+        r.draw_ui_rect(0, h * 0.62 * k, w, h * 0.62 / 23 + 1, cor)
+    r.draw_ui_rect(0, h * 0.62, w, h * 0.38, NOITE)
+    lx, ly = w * 0.78, h * 0.2
+    for i in range(6):  # o halo da lua (no céu, não no chão: redondo)
+        r.draw_ui_circle(lx, ly, 46 * (2.2 - i * 0.22), a((235, 225, 230, 255), 18))
+    r.draw_ui_circle(lx, ly, 40, (232, 222, 228, 255))
+    k = (ly - 6) / (h * 0.62)  # o disco que corta a lua tem a cor do céu ali
+    ceu = (int(10 + 34 * k), int(9 + 8 * k), int(13 + 46 * k), 255)
+    r.draw_ui_circle(lx + 12, ly - 6, 34, ceu)  # a lua em foice
+    rng = random.Random(11)
+    x = 0.0
+    while x < w:  # os prédios, sempre os mesmos (semente fixa)
+        larg = rng.uniform(40, 90)
+        alto = rng.uniform(h * 0.18, h * 0.42)
+        topo = h * 0.62 - alto + h * 0.1
+        r.draw_ui_rect(x, topo, larg + 1, h - topo, (12, 10, 16, 255))
+        for jy in range(int(topo) + 10, int(h * 0.7), 16):
+            for jx in range(int(x) + 8, int(x + larg) - 6, 14):
+                if rng.random() < 0.18:
+                    acesa = 0.6 + 0.4 * math.sin(relogio * 0.7 + jx * 0.3 + jy)
+                    r.draw_ui_rect(jx, jy, 5, 7, a((235, 200, 120, 255), 120 * acesa))
+        x += larg + rng.uniform(2, 10)
+    for i in range(3):  # a névoa passando
+        y = h * (0.62 + 0.08 * i)
+        dx = (relogio * (12 + 6 * i)) % w
+        for k in (-1, 0):
+            r.draw_ui_rect(dx + k * w, y, w * 0.7, 26, a(VEU, 40))
+    r.draw_ui_rect(0, 0, w, h, a(PRETO, 60))
+
+
+# ----------------------------------------------- a visão 3/4 (2.5D): o chão e as alturas
+
+ALTURA_EFEITO = 30  # faíscas e números saem na altura do peito, não do chão
+ALTURA_TIRO = 26  # projéteis voam acima do chão (com sombra embaixo)
+
+
+def oval(r, sx, sy, raio, cor, largura=0) -> None:
+    """Um círculo deitado no chão: na visão 3/4 ele vira oval."""
+    r.draw_ui_polygon(elipse(sx, sy, raio, raio * ESCALA_Y, n=28), cor, largura)
+
+
+def arco_chao(r, sx, sy, raio, a0, a1, cor, largura=2) -> None:
+    """Um arco deitado no chão (ângulos do mundo)."""
+    n = max(6, int(abs(a1 - a0) * 10))
+    pts = [
+        (
+            sx + math.cos(a0 + (a1 - a0) * i / n) * raio,
+            sy + math.sin(a0 + (a1 - a0) * i / n) * raio * ESCALA_Y,
+        )
+        for i in range(n + 1)
+    ]
+    for p, q in zip(pts, pts[1:], strict=False):
+        r.draw_ui_line(p[0], p[1], q[0], q[1], cor, largura)
+
+
+def brilho(r, sx, sy, raio, cor, forca: float = 1.0) -> None:
+    """Uma luz suave no chão: ovais concêntricas bem transparentes."""
+    if forca <= 0:
+        return
+    for i in range(6):
+        oval(r, sx, sy, raio * (2.2 - i * 0.22), a(cor, 9 * forca))
+
+
+def desenhar_mancha(r, cam, m: Mancha) -> None:
+    sx, sy = cam.tela_de(m.x, m.y)
+    corpo = [(sx + px, sy + py * ESCALA_Y) for px, py in m.pts[:-2]]
+    r.draw_ui_polygon(corpo, m.cor)
+    for px, py in m.pts[-2:]:
+        r.draw_ui_circle(sx + px, sy + py * ESCALA_Y, 2.5, m.cor)
+
+
+def marca(r, sx, sy, topo, raio, relogio, cor) -> None:
+    """O prego cravado: um losango que pisca acima da cabeça e um anel no chão."""
+    y = topo - 10 + math.sin(relogio * 6) * 2
+    r.draw_ui_polygon([(sx, y - 7), (sx + 5, y), (sx, y + 7), (sx - 5, y)], a(cor, 230))
+    oval(r, sx, sy, raio * 1.4, a(cor, 90 + 60 * math.sin(relogio * 8)), 1)
+
+
+def atordoado(r, sx, topo, raio, relogio) -> None:
+    for i in range(3):
+        t = relogio * 5 + i * 2.1
+        r.draw_ui_circle(sx + math.cos(t) * raio * 0.9, topo - 4 + math.sin(t) * 3, 3, a(OLHO, 220))
+
+
+def entoando(r, sx, sy, topo, raio, k, dano_frac, cor=LAVA) -> None:
+    """A entoação do domínio: anéis fechando no chão, 領域展開 e a barra do que falta cortar."""
+    for i in range(3):
+        oval(r, sx, sy, raio * (1.4 + (1 - k) * (2.5 + i)), a(cor, 90 + 50 * k), 2)
+    r.draw_text(
+        sx, topo - 30, "領域展開", 26, a(LAVA_CLARA, 240), anchor="center", font_id=FONTE_PINCEL
     )
-    r.draw_ui_polygon(elipse(sx, sy, raio * 0.95, raio * 1.1, ang), CARNE_ABISMO_2, 2)
-    px, py = -olhar[1], olhar[0]
-    for k in (-1, 1):  # os olhos pequenos, na frente
-        ex = sx + olhar[0] * raio * 0.55 + px * k * raio * 0.3
-        ey = sy + olhar[1] * raio * 0.55 + py * k * raio * 0.3
-        r.draw_ui_circle(ex, ey, raio * 0.14, (240, 230, 200, 255))
-        r.draw_ui_circle(ex + olhar[0] * 2, ey + olhar[1] * 2, raio * 0.07, PRETO)
-    bx, by = sx + olhar[0] * raio * 0.85, sy + olhar[1] * raio * 0.85
-    r.draw_ui_polygon(elipse(bx, by, raio * 0.12, raio * 0.3, ang), (200, 70, 80, 255))
+    w = raio * 3
+    r.draw_ui_rect(sx - w / 2, topo - 12, w, 5, a(PRETO, 180))
+    r.draw_ui_rect(sx - w / 2, topo - 12, w * min(1.0, dano_frac), 5, TINTA)
 
 
-DESENHOS_CHEFE["abismo"] = chefe_abismo
+def escudo(r, sx, sy, topo, raio, relogio, bloqueou: bool) -> None:
+    """O reforço: um casco hexagonal de energia em volta do corpo de pé."""
+    cy, ry, rx = (sy + topo) / 2, (sy - topo) * 0.62, raio * 1.9
+    pts = [
+        (
+            sx + math.cos(i * math.pi / 3 + relogio * 0.8) * rx,
+            cy + math.sin(i * math.pi / 3 + relogio * 0.8) * ry,
+        )
+        for i in range(6)
+    ]
+    r.draw_ui_polygon(pts, a(ENERGIA, 90 if bloqueou else 35))
+    r.draw_ui_polygon(pts, a(ENERGIA, 220 if bloqueou else 120), 2)
+
+
+def reversa(r, sx, sy, topo, raio, relogio) -> None:
+    """A Técnica Reversa: energia clara subindo do chão até acima da cabeça."""
+    oval(r, sx, sy, raio * 1.7 + math.sin(relogio * 10) * 2, a(CURA, 110), 2)
+    for i in range(6):
+        k = (relogio * 1.6 + i / 6) % 1
+        x = sx + math.sin(i * 2.4 + relogio * 3) * raio * 0.9
+        r.draw_ui_circle(x, sy - k * (sy - topo + 20), 3 + 2 * (1 - k), a(CURA, 220 * (1 - k)))
+
+
+def dominio_simples(r, sx, sy, raio, relogio) -> None:
+    """O Domínio Simples: um círculo no chão com marcas, em volta do pé."""
+    rr = raio * 4.2
+    oval(r, sx, sy, rr, a(TINTA, 25))
+    oval(r, sx, sy, rr, a(TINTA, 200), 2)
+    for i in range(16):
+        t = i * math.pi / 8 + relogio * 0.5
+        c, s = math.cos(t), math.sin(t) * ESCALA_Y
+        r.draw_ui_line(
+            sx + c * rr, sy + s * rr, sx + c * (rr - 8), sy + s * (rr - 8), a(TINTA, 200), 2
+        )
+
+
+def projetil(r, cam, p, cor) -> None:
+    sx, sy = cam.tela_de(p.x, p.y)
+    oval(r, sx, sy, p.raio, a(PRETO, 90))  # a sombra no chão
+    sy -= ALTURA_TIRO
+    for k in (3, 2, 1):  # o rastro: círculos que somem para trás
+        d = k * p.raio * 1.1
+        r.draw_ui_circle(
+            sx - p.dx * d, sy - p.dy * d * ESCALA_Y, p.raio * (1 - k * 0.2), a(cor, 50 * (4 - k))
+        )
+    r.draw_ui_circle(sx, sy, p.raio + 3, a(cor, 200))
+    r.draw_ui_circle(sx, sy, p.raio * 0.6, TINTA)
+
+
+def brasa(r, cam, b, relogio, cor=LAVA) -> None:
+    sx, sy = cam.tela_de(b.x, b.y)
+    oval(r, sx, sy, b.raio, a(PRETO, 90))
+    sy -= ALTURA_TIRO
+    v = math.hypot(b.vx, b.vy) or 1
+    for k in (3, 2, 1):
+        d = k * b.raio * 0.9
+        r.draw_ui_circle(
+            sx - b.vx / v * d,
+            sy - b.vy / v * d * ESCALA_Y,
+            b.raio * (1 - k * 0.22),
+            a(cor, 60 * (4 - k)),
+        )
+    r.draw_ui_circle(sx, sy, b.raio, cor)
+    r.draw_ui_circle(sx, sy, b.raio * (0.45 + 0.15 * math.sin(relogio * 30)), LAVA_CLARA)
+
+
+def desenhar_efeito(r, cam, e: Efeito) -> None:
+    k = e.t / e.vida
+    sx, sy = cam.tela_de(e.x, e.y)
+    alto = sy - ALTURA_EFEITO
+    if e.tipo == "faisca":
+        cauda = 0.03
+        r.draw_ui_line(
+            sx, alto, sx - e.vx * cauda, alto - e.vy * cauda * ESCALA_Y, a(e.cor, 255 * (1 - k)), 2
+        )
+    elif e.tipo == "onda":
+        oval(r, sx, sy, 10 + e.raio * k, a(e.cor, 160 * (1 - k)), 2)
+    elif e.tipo == "linha":  # o rastro de um corte, sumindo
+        p1, p2 = cam.tela_de(*e.pts[0]), cam.tela_de(*e.pts[1])
+        r.draw_ui_line(
+            p1[0], p1[1], p2[0], p2[1], a(e.cor, 230 * (1 - k)), max(1, int(6 * (1 - k)))
+        )
+        r.draw_ui_line(p1[0], p1[1], p2[0], p2[1], a(TINTA, 255 * (1 - k)), 1)
+    elif e.tipo == "raio":
+        pts = [cam.tela_de(x, y) for x, y in e.pts]
+        pts = [(x, y - ALTURA_EFEITO) for x, y in pts]
+        for p, q in zip(pts, pts[1:], strict=False):
+            r.draw_ui_line(p[0], p[1], q[0], q[1], a(SANGUE, 230 * (1 - k)), 7)
+            r.draw_ui_line(p[0], p[1], q[0], q[1], a(PRETO, 255 * (1 - k)), 3)
+    elif e.tipo == "numero":
+        grande = len(e.texto) and e.vida > 0.6
+        r.draw_text(
+            sx,
+            alto - 20,
+            e.texto,
+            30 if grande else 20,
+            a(SANGUE if grande else e.cor, 255 * (1 - k * k)),
+            anchor="center",
+            font_id=FONTE_PINCEL,
+        )
+
+
+def parede_do_fundo(r, x0, y0, x1, relogio) -> None:
+    """A cortina do véu subindo atrás da arena: dá a profundidade da visão 3/4."""
+    alto = 150
+    for i in range(10):
+        k = i / 9
+        r.draw_ui_rect(x0, y0 - alto * (1 - k), x1 - x0, alto / 9 + 1, a(VEU, 40 + 120 * k))
+    for i in range(int((x1 - x0) / 22) + 1):
+        x = x0 + i * 22
+        onda = math.sin(relogio * 1.5 + i * 0.7) * 5
+        r.draw_ui_line(x, y0 - alto, x + onda, y0, a((70, 30, 96, 255), 120), 2)

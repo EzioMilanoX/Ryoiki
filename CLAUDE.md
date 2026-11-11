@@ -71,6 +71,28 @@ choque de domínios e Domínio Simples. Nada de elenco, mapa ou história antes 
    Controle: Start pausa (ação `pausa`), Back abre o domínio, e segurar o reforço sob o
    domínio inimigo vira Domínio Simples (o C segue no teclado).
 
+8. ✅ Acabamento visual: ícone próprio (`tools/gerar_icone.py` gera `data/icone.png`/`.ico`;
+   o atalho da Área de Trabalho e a janela usam), barras inclinadas com rastro do dano,
+   brilho sob o jogador e o chefe, tinta dos acertos no chão, feiticeiro maior com aba do
+   casaco e botão da gola, e o título com céu, lua, prédios e névoa (`visual.fundo_titulo`).
+
+9. ✅ Visão 3/4 (2.5D): `movimento.ESCALA_Y` achata o chão na câmera (`tela_de(x, y, z)`,
+   `mundo_de` inverte para o cursor); tudo que é chão vira oval (`visual.oval`,
+   `arco_chao`); as figuras ficam em pé em `figuras.py` (pés em `(sx, sy)`, devolvem o topo)
+   e a arena desenha por profundidade (y). Projéteis voam com sombra; parede do véu ao fundo.
+   Confirmar nos menus é Espaço. Dificuldade subiu (chefes +15% vida, +30% dano, mais
+   rápidos; menos i-frames, cura e defesa; rota cura 25).
+
+10. ✅ Chefes pintados: `tools/gerar_sprites.py` pinta cada chefe em 4x (peças com contorno,
+   sombra e brilho por máscara deslocada, luzes aditivas borradas), reduz com suavização e
+   salva 8 quadros + o clarão branco em `data/sprites/` (com `sprites.json`). `sprites.py`
+   registra as texturas e `figuras.desenhar_chefe` usa o sprite (cai no desenho por
+   primitivas se faltar). Depende da `draw_ui_image` da engine (M18).
+
+11. ✅ Fases de chefe (`fases` no JSON: abaixo de `limiar`, troca desenho, velocidade, ritmo
+   e padrões; estado `transformando`). Dagon tem duas formas: a inicial grotesca
+   (`abismo`) e, abaixo de 50%, a final humanoide (`abismo_final`) com padrões novos.
+
 ## Git
 Repositório local criado (branch `main`, identidade local EzioMilanoX). Ainda sem remoto
 no GitHub: criar e dar push só quando o Enzo pedir.

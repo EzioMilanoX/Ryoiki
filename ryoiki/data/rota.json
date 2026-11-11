@@ -1,6 +1,6 @@
 {
   "_nota": "A rota: lutas em sequência (grau escala vida e dano do chefe). Entre lutas, escolha 1 de 3 recompensas. mods: feel = combate | defesa | dominio | movimento; op = mult | soma. Votos são trocas: ganha de um lado, paga do outro.",
-  "cura_entre_lutas": 35,
+  "cura_entre_lutas": 25,
   "lutas": [
     {"chefe": "vulcao", "grau": 1.0},
     {"chefe": "mahito", "grau": 1.0},
@@ -20,7 +20,7 @@
               {"feel": "combate", "campo": "kokusen_janela_zona", "op": "mult", "valor": 1.3}]},
     {"id": "reversa_fluida", "nome": "Reversa Fluida", "tipo": "bencao", "descricao": "a Técnica Reversa cura 40% a mais",
      "mods": [{"feel": "defesa", "campo": "reversa_cura", "op": "mult", "valor": 1.4}]},
-    {"id": "pele_reforcada", "nome": "Pele Reforçada", "tipo": "bencao", "descricao": "o reforço segura 90% do golpe",
+    {"id": "pele_reforcada", "nome": "Pele Reforçada", "tipo": "bencao", "descricao": "o reforço segura 15% a mais do golpe",
      "mods": [{"feel": "defesa", "campo": "guarda_reducao", "op": "soma", "valor": 0.15}]},
     {"id": "passo_leve", "nome": "Passo Leve", "tipo": "bencao", "descricao": "a esquiva recarrega 35% mais rápido",
      "mods": [{"feel": "movimento", "campo": "esquiva_recarga", "op": "mult", "valor": 0.65}]},

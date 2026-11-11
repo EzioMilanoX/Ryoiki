@@ -1,5 +1,5 @@
 {
-  "_nota": "Os chefes. Padrões: investida, erupcoes, brasas, invocar, cortes (o resto são números do tipo). visual escolhe o desenho; regeneracao é vida/s. O domínio entoa quando a vida cai abaixo de cada gatilho; dano >= interromper ou um atordoamento corta.",
+  "_nota": "Os chefes. Padrões: investida, erupcoes, brasas, invocar, cortes (o resto são números do tipo). visual escolhe o desenho; regeneracao é vida/s. O domínio entoa quando a vida cai abaixo de cada gatilho; dano >= interromper ou um atordoamento corta. fases: troca desenho, velocidade, espera e padrões abaixo de um limiar de vida.",
   "chefe": "vulcao",
   "maldicoes": {
     "vulcao": {
@@ -11,12 +11,12 @@
         100,
         40
       ],
-      "vida": 900,
+      "vida": 1035,
       "raio": 34,
       "massa": 5,
       "velocidade": 70,
       "distancia": 200,
-      "espera": 1.1,
+      "espera": 0.88,
       "padroes": [
         {
           "id": "investida",
@@ -26,7 +26,7 @@
           "recuperacao": 0.7,
           "velocidade": 900,
           "alcance": 560,
-          "dano": 20
+          "dano": 26
         },
         {
           "id": "erupcoes",
@@ -38,7 +38,7 @@
           "espalhar": 220,
           "raio": 70,
           "atraso": 0.9,
-          "dano": 14
+          "dano": 18
         },
         {
           "id": "insetos",
@@ -51,7 +51,7 @@
           "velocidade": 380,
           "raio": 9,
           "alcance": 800,
-          "dano": 10
+          "dano": 13
         }
       ],
       "dominio": {
@@ -61,7 +61,7 @@
         "interromper": 60,
         "duracao": 6,
         "tique": 0.5,
-        "dano_tique": 3,
+        "dano_tique": 3.8,
         "gatilhos": [
           0.65,
           0.3
@@ -81,12 +81,12 @@
         185,
         215
       ],
-      "vida": 760,
+      "vida": 874,
       "raio": 22,
       "massa": 2.5,
       "velocidade": 110,
       "distancia": 170,
-      "espera": 1.0,
+      "espera": 0.8,
       "regeneracao": 4,
       "padroes": [
         {
@@ -100,7 +100,7 @@
           "vida": 30,
           "raio": 14,
           "velocidade": 120,
-          "dano": 9
+          "dano": 12
         },
         {
           "id": "lamina",
@@ -110,7 +110,7 @@
           "recuperacao": 0.5,
           "velocidade": 1050,
           "alcance": 420,
-          "dano": 18
+          "dano": 23
         },
         {
           "id": "corpo_repelido",
@@ -123,7 +123,7 @@
           "velocidade": 300,
           "raio": 20,
           "alcance": 700,
-          "dano": 16
+          "dano": 21
         }
       ],
       "dominio": {
@@ -133,7 +133,7 @@
         "interromper": 55,
         "duracao": 5,
         "tique": 0.5,
-        "dano_tique": 5,
+        "dano_tique": 6.2,
         "gatilhos": [
           0.6,
           0.25
@@ -152,12 +152,12 @@
         40,
         60
       ],
-      "vida": 1100,
+      "vida": 1265,
       "raio": 26,
       "massa": 6,
       "velocidade": 120,
       "distancia": 230,
-      "espera": 0.85,
+      "espera": 0.68,
       "regeneracao": 2,
       "padroes": [
         {
@@ -172,7 +172,7 @@
           "largura": 18,
           "atraso": 0.6,
           "intervalo": 0.12,
-          "dano": 12
+          "dano": 16
         },
         {
           "id": "clivar",
@@ -182,7 +182,7 @@
           "recuperacao": 0.6,
           "velocidade": 1150,
           "alcance": 480,
-          "dano": 24
+          "dano": 31
         },
         {
           "id": "fuga",
@@ -195,7 +195,7 @@
           "velocidade": 520,
           "raio": 28,
           "alcance": 900,
-          "dano": 32
+          "dano": 42
         }
       ],
       "dominio": {
@@ -205,7 +205,7 @@
         "interromper": 70,
         "duracao": 5,
         "tique": 0.35,
-        "dano_tique": 5,
+        "dano_tique": 6.2,
         "gatilhos": [
           0.7,
           0.4,
@@ -225,12 +225,12 @@
         170,
         190
       ],
-      "vida": 950,
+      "vida": 1092,
       "raio": 32,
       "massa": 4,
       "velocidade": 60,
       "distancia": 250,
-      "espera": 1.0,
+      "espera": 0.8,
       "regeneracao": 0,
       "padroes": [
         {
@@ -244,7 +244,7 @@
           "vida": 18,
           "raio": 10,
           "velocidade": 170,
-          "dano": 7
+          "dano": 9
         },
         {
           "id": "maremoto",
@@ -256,7 +256,7 @@
           "espalhar": 260,
           "raio": 60,
           "atraso": 0.8,
-          "dano": 12
+          "dano": 16
         },
         {
           "id": "jato",
@@ -269,7 +269,7 @@
           "velocidade": 450,
           "raio": 11,
           "alcance": 850,
-          "dano": 9
+          "dano": 12
         }
       ],
       "dominio": {
@@ -279,14 +279,60 @@
         "interromper": 60,
         "duracao": 6,
         "tique": 0.4,
-        "dano_tique": 4,
+        "dano_tique": 5.0,
         "gatilhos": [
           0.6,
           0.3
         ],
         "queimado": 5,
         "refinamento": 0.24
-      }
+      },
+      "fases": [
+        {
+          "limiar": 0.5,
+          "visual": "abismo_final",
+          "velocidade": 95,
+          "espera": 0.65,
+          "distancia": 170,
+          "padroes": [
+            {
+              "id": "cardume_voraz",
+              "nome": "Cardume Voraz",
+              "tipo": "invocar",
+              "carga": 0.45,
+              "recuperacao": 0.45,
+              "quantidade": 5,
+              "maximo": 10,
+              "vida": 20,
+              "raio": 10,
+              "velocidade": 200,
+              "dano": 10
+            },
+            {
+              "id": "tentaculo",
+              "nome": "Golpe de Tentáculo",
+              "tipo": "investida",
+              "carga": 0.5,
+              "recuperacao": 0.5,
+              "velocidade": 980,
+              "alcance": 480,
+              "dano": 25
+            },
+            {
+              "id": "mare",
+              "nome": "Maré Esmagadora",
+              "tipo": "erupcoes",
+              "carga": 0.4,
+              "recuperacao": 0.45,
+              "quantidade": 8,
+              "espalhar": 280,
+              "raio": 72,
+              "atraso": 0.75,
+              "dano": 17
+            }
+          ]
+        }
+      ]
     }
   }
 }

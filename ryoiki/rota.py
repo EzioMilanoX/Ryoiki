@@ -61,7 +61,22 @@ def escalar(dados: DadosChefe, grau: float) -> DadosChefe:
         for p in dados.padroes
     )
     dominio = replace(dados.dominio, dano_tique=dados.dominio.dano_tique * grau)
-    return replace(dados, vida=dados.vida * grau, padroes=padroes, dominio=dominio)
+    fases = tuple(
+        (
+            limiar,
+            {
+                **novos,
+                "padroes": tuple(
+                    replace(p, p={**p.p, "dano": p.p["dano"] * grau} if "dano" in p.p else p.p)
+                    for p in novos["padroes"]
+                ),
+            }
+            if "padroes" in novos
+            else novos,
+        )
+        for limiar, novos in dados.fases
+    )
+    return replace(dados, vida=dados.vida * grau, padroes=padroes, dominio=dominio, fases=fases)
 
 
 def _aplicar(feel, mods: list[dict]):

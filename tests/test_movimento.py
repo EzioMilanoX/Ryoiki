@@ -2,6 +2,8 @@
 
 import math
 
+import pytest
+
 from ryoiki.movimento import Camera, Corpo, Feel
 
 F = Feel()
@@ -61,7 +63,7 @@ def test_a_camera_segue_e_nao_mostra_fora_da_arena():
     for _ in range(300):
         cam.seguir(F, c, 0, c.y, 1 / 60)
     assert cam.x == 480  # meia tela: a borda da arena encosta na borda da tela
-    assert cam.tela_de(*cam.mundo_de(100, 200)) == (100, 200)
+    assert cam.tela_de(*cam.mundo_de(100, 200)) == pytest.approx((100, 200))
 
 
 def test_o_feel_vem_do_json():

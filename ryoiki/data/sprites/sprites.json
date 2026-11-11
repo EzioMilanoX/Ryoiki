@@ -1,0 +1,57 @@
+{
+  "vulcao": {
+    "quadros": 8,
+    "fps": 8,
+    "largura": 150,
+    "altura": 150,
+    "pes": [
+      72.0,
+      146
+    ],
+    "topo": 0
+  },
+  "remendos": {
+    "quadros": 8,
+    "fps": 8,
+    "largura": 150,
+    "altura": 160,
+    "pes": [
+      72.0,
+      156
+    ],
+    "topo": 12
+  },
+  "rei": {
+    "quadros": 8,
+    "fps": 8,
+    "largura": 170,
+    "altura": 170,
+    "pes": [
+      81.6,
+      166
+    ],
+    "topo": 0
+  },
+  "abismo": {
+    "quadros": 8,
+    "fps": 8,
+    "largura": 160,
+    "altura": 140,
+    "pes": [
+      76.8,
+      136
+    ],
+    "topo": 34
+  },
+  "abismo_final": {
+    "quadros": 8,
+    "fps": 8,
+    "largura": 170,
+    "altura": 190,
+    "pes": [
+      81.6,
+      186
+    ],
+    "topo": 0
+  }
+}

@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from ryoiki import visual
+from ryoiki import figuras
 from ryoiki.chefe import Chefe, carregar_chefe
 from ryoiki.combate import GOLPE, FeelCombate, Golpeador
 from ryoiki.movimento import DADOS, Corpo
@@ -24,7 +24,7 @@ def invocar(ch, corpo):
 def test_todo_chefe_do_json_carrega_e_tem_desenho():
     ids = json.loads((DADOS / "maldicoes.json").read_text(encoding="utf-8"))["maldicoes"]
     for cid in ids:
-        assert carregar_chefe(cid).visual in visual.DESENHOS_CHEFE
+        assert carregar_chefe(cid).visual in figuras.DESENHOS_CHEFE
 
 
 def test_invocar_respeita_o_maximo_de_lacaios():
@@ -69,3 +69,26 @@ def test_mahito_regenera_menos_com_a_tecnica_queimada():
     for _ in range(120):
         ch.atualizar(DT, corpo, ARENA)
     assert ch.alvo.vida == vida
+
+
+def test_dagon_muda_de_forma_abaixo_do_limiar_uma_vez_so():
+    dados = carregar_chefe("dagon")
+    limiar, novos = dados.fases[0]
+    ch, corpo = Chefe.novo(dados, 800, 500), Corpo(200, 200)
+    ch.t_espera = 99
+    ch.alvo.vida = ch.alvo.vida_max * limiar - 1
+    ch.gatilhos.clear()  # sem domínio no meio do teste
+    ch.atualizar(DT, corpo, ARENA)
+    assert ch.estado == "transformando" and ch.dados.visual == novos["visual"]
+    assert {p.id for p in ch.dados.padroes} == {p.id for p in novos["padroes"]}
+    assert any(ev[0] == "fase" for ev in ch.eventos)
+    for _ in range(int(1.5 / DT)):
+        ch.atualizar(DT, corpo, ARENA)
+    assert ch.estado != "transformando" and ch.fases == []
+
+
+def test_todo_visual_de_fase_tem_desenho():
+    ids = json.loads((DADOS / "maldicoes.json").read_text(encoding="utf-8"))["maldicoes"]
+    for cid in ids:
+        for _, novos in carregar_chefe(cid).fases:
+            assert novos.get("visual", "vulcao") in figuras.DESENHOS_CHEFE

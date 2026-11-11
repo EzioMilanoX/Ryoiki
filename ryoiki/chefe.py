@@ -12,6 +12,9 @@
 Dano suficiente ou um atordoamento nesse tempo **interrompe**. Se não, o domínio fecha a
 arena: o acerto é **garantido** (a esquiva não salva, só o reforço reduz) até ele acabar. Depois
 o chefe fica **queimado** (sem técnica) por uns segundos: é a hora de bater.
+
+**Fases:** `fases` no JSON troca o chefe quando a vida cai abaixo de `limiar` (outro
+desenho, velocidade, ritmo e padrões). Ele para um instante para se transformar.
 """
 
 from __future__ import annotations
@@ -19,7 +22,7 @@ from __future__ import annotations
 import json
 import math
 import random
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 from ryoiki.combate import Alvo
@@ -69,19 +72,20 @@ class DadosChefe:
     dominio: Dominio
     visual: str = "vulcao"  # qual desenho usar (visual.desenhar_chefe)
     regeneracao: float = 0.0  # vida/s, menos com a técnica queimada
+    fases: tuple = ()  # ((limiar, {campo: valor novo}), ...), do maior limiar ao menor
 
 
 def carregar_chefe(cid: str | None = None, caminho: Path | None = None) -> DadosChefe:
     dados = json.loads((caminho or DADOS / "maldicoes.json").read_text(encoding="utf-8"))
     cid = cid or dados["chefe"]
     c = dados["maldicoes"][cid]
-    padroes = []
-    for p in c["padroes"]:
-        if p["tipo"] not in TIPOS:
-            raise ValueError(f"{cid}.{p['id']}: tipo de padrão desconhecido {p['tipo']!r}")
-        fixos = {"id", "nome", "tipo", "carga", "recuperacao"}
-        resto = {k: v for k, v in p.items() if k not in fixos}
-        padroes.append(Padrao(p["id"], p["nome"], p["tipo"], p["carga"], p["recuperacao"], resto))
+    padroes = _ler_padroes(cid, c["padroes"])
+    fases = []
+    for f in c.get("fases", []):
+        novos = {k: f[k] for k in ("visual", "velocidade", "espera", "distancia", "raio") if k in f}
+        if "padroes" in f:
+            novos["padroes"] = _ler_padroes(cid, f["padroes"])
+        fases.append((float(f["limiar"]), novos))
     d = c["dominio"]
     dominio = Dominio(
         d["nome"],
@@ -111,7 +115,19 @@ def carregar_chefe(cid: str | None = None, caminho: Path | None = None) -> Dados
         dominio,
         c.get("visual", "vulcao"),
         c.get("regeneracao", 0.0),
+        tuple(sorted(fases, key=lambda f: -f[0])),
     )
+
+
+def _ler_padroes(cid: str, brutos: list) -> tuple[Padrao, ...]:
+    padroes = []
+    for p in brutos:
+        if p["tipo"] not in TIPOS:
+            raise ValueError(f"{cid}.{p['id']}: tipo de padrão desconhecido {p['tipo']!r}")
+        fixos = {"id", "nome", "tipo", "carga", "recuperacao"}
+        resto = {k: v for k, v in p.items() if k not in fixos}
+        padroes.append(Padrao(p["id"], p["nome"], p["tipo"], p["carga"], p["recuperacao"], resto))
+    return tuple(padroes)
 
 
 @dataclass
@@ -193,13 +209,27 @@ class Chefe:
     erupcoes: list[Erupcao] = field(default_factory=list)
     cortes: list[Corte] = field(default_factory=list)
     lacaios: list[Lacaio] = field(default_factory=list)
+    fases: list = field(default_factory=list)  # as que ainda não aconteceram
     eventos: list[tuple] = field(default_factory=list)  # para o desenho; a cena esvazia
 
     @classmethod
     def novo(cls, dados: DadosChefe, x: float, y: float, seed: int = 7) -> Chefe:
         alvo = Alvo(x, y, raio=dados.raio, vida_max=dados.vida, vida=dados.vida)
         alvo.massa = dados.massa
-        return cls(dados, alvo, random.Random(seed), gatilhos=list(dados.dominio.gatilhos))
+        ch = cls(dados, alvo, random.Random(seed), gatilhos=list(dados.dominio.gatilhos))
+        ch.fases = list(dados.fases)
+        return ch
+
+    def _mudar_de_fase(self) -> None:
+        limiar, novos = self.fases.pop(0)
+        self.dados = replace(self.dados, **novos)
+        if "raio" in novos:
+            self.alvo.raio = novos["raio"]
+        self.estado, self.t, self.ultimo = "transformando", 1.4, ""
+        self.brasas.clear()
+        self.erupcoes.clear()
+        self.cortes.clear()
+        self.eventos.append(("fase", self.alvo.x, self.alvo.y))
 
     @property
     def dominio_ativo(self) -> bool:
@@ -239,7 +269,19 @@ class Chefe:
             elif self.estado in ("carga", "investida"):
                 self.estado, self.t_espera = "andando", self.dados.espera
             return danos
+        if (
+            self.fases
+            and self.estado in ("andando", "recupera", "queimado")
+            and not self.dominio_ativo
+            and al.vida / al.vida_max <= self.fases[0][0]
+        ):
+            self._mudar_de_fase()
         d = self.dados
+        if self.estado == "transformando":  # parado, mudando de forma (dá para bater)
+            self.t -= dt
+            if self.t <= 0:
+                self.estado, self.t_espera = "andando", d.espera
+            return danos
         if (
             self.estado == "andando"
             and self.gatilhos

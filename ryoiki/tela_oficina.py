@@ -1,6 +1,6 @@
 """A tela da oficina (v1, passo 3): montar a técnica própria peça por peça.
 
-W/S escolhe a linha, A/D troca a peça, Enter na última linha salva, Esc volta sem salvar.
+W/S escolhe a linha, A/D troca a peça, Espaço na última linha salva, Esc volta sem salvar.
 As regras (peças, custo, gravação) ficam em `oficina.py`.
 """
 
@@ -140,7 +140,7 @@ class OficinaScene(IScene):
         r.draw_text(
             LARGURA / 2,
             ALTURA - 18,
-            "W/S linha · A/D troca · Enter salva · Esc volta",
+            "W/S linha · A/D troca · Espaço salva · Esc volta",
             12,
             v.a(v.TINTA, 110),
             anchor="center",

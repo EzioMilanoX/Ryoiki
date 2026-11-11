@@ -16,6 +16,7 @@ import random
 
 from ouroboros.bootstrap.scene import IScene
 
+from ryoiki import figuras as f
 from ryoiki import visual as v
 from ryoiki.chefe import Chefe, carregar_chefe
 from ryoiki.combate import GOLPE, REFORCO, Alvo, FeelCombate, Golpeador
@@ -96,11 +97,25 @@ class ArenaScene(IScene):
         self.expansao = Expansao(self.fdom)
         self.alvo = self._nova_maldicao()
         self.conjurador.trocar(self.conjurador.tecnica)
+        self.manchas: list[v.Mancha] = []  # a tinta dos acertos no chão
+        self.f_vida, self.f_chefe = 1.0, 1.0  # o rastro do dano nas barras
 
     def _nova_maldicao(self) -> Alvo:
         w, h = self.feel.arena
         self.chefe = Chefe.novo(self.dados_chefe, w / 2 + 260, h / 2)
         return self.chefe.alvo
+
+    def _fantasmas(self, dt: float) -> None:
+        """O rastro claro nas barras: fica onde estava e desce devagar até o valor de verdade."""
+        vida = self.vitalidade.vida / self.fd.vida_max
+        chefe = self.alvo.vida / self.alvo.vida_max
+        self.f_vida = vida if vida > self.f_vida else max(vida, self.f_vida - 0.5 * dt)
+        self.f_chefe = chefe if chefe > self.f_chefe else max(chefe, self.f_chefe - 0.35 * dt)
+
+    def _manchar(self, x: float, y: float, raio: float, cor) -> None:
+        self.manchas.append(v.nova_mancha(self.rng, x, y, raio, cor))
+        if len(self.manchas) > 70:
+            self.manchas.pop(0)
 
     @property
     def cor_chefe(self):
@@ -161,7 +176,7 @@ class ArenaScene(IScene):
         r.draw_text(
             LARGURA / 2,
             ALTURA - 40,
-            "W/S escolhe · Enter confirma · Esc volta à luta",
+            "W/S escolhe · Espaço confirma · Esc volta à luta",
             13,
             v.a(v.TINTA, 120),
             anchor="center",
@@ -177,6 +192,7 @@ class ArenaScene(IScene):
         dt = min(delta_time, 1 / 30)  # um engasgo não teleporta o jogador
         self.relogio += dt
         e = self.entrada
+        self._fantasmas(dt)
         if e.is_action_pressed("pausa"):
             self.pausado, self.opcao = not self.pausado, 0
             return
@@ -254,6 +270,7 @@ class ArenaScene(IScene):
         vida_antes = self.alvo.vida
         for imp in g.atualizar(dt, self.corpo, self.alvos):
             self.efeitos += v.efeitos_do_impacto(imp, self.rng)
+            self._manchar(imp.x, imp.y, 16 if imp.kokusen else 9, v.a(v.PRETO, 150))
             self.t_parado = max(self.t_parado, imp.hitstop)
             self.tremor = max(self.tremor, 16 if imp.kokusen else (7 if imp.final else 3.5))
             if imp.kokusen:
@@ -261,6 +278,7 @@ class ArenaScene(IScene):
         for ac in self.conjurador.atualizar(dt, self.corpo, self.alvos, self.feel.arena):
             self.efeitos += v.efeitos_da_tecnica(ac, ac.cor, self.rng)
             if ac.dano:
+                self._manchar(ac.x, ac.y, 8, v.a(ac.cor, 70))
                 self.t_parado = max(self.t_parado, 0.06 if ac.dano >= 20 else 0.03)
                 self.tremor = max(self.tremor, 9 if ac.dano >= 20 else 3)
         for ac in xp.atualizar(
@@ -322,6 +340,10 @@ class ArenaScene(IScene):
             elif tipo == "interrompido":
                 self.t_aviso, self.tremor = 1.2, 10
                 self.efeitos.append(v.Efeito("onda", x, y, vida=0.5, cor=v.TINTA, raio=140))
+            elif tipo == "fase":
+                self.t_aviso_txt = (f"第二形態 — {self.dados_chefe.nome} muda de forma", 2.0)
+                self.tremor, self.t_clarao = 16, 0.12
+                self.efeitos.append(v.Efeito("onda", x, y, vida=0.8, cor=self.cor_chefe, raio=300))
             elif tipo == "corte":
                 self.efeitos.append(
                     v.Efeito(
@@ -369,6 +391,7 @@ class ArenaScene(IScene):
             guardando=self.guardando,
         )
         if entrou > 0:
+            self._manchar(c.x, c.y, 7, v.a(v.SANGUE, 110))
             self.efeitos.append(
                 v.Efeito("numero", c.x, c.y - 24, 0, -80, 0.6, texto=f"-{entrou:.0f}", cor=v.SANGUE)
             )
@@ -398,7 +421,7 @@ class ArenaScene(IScene):
         if self.t_clarao > 0:  # o Clarão Negro apaga a tela por um instante
             r.draw_ui_rect(0, 0, LARGURA, ALTURA, v.a(v.PRETO, 210))
             sx, sy = cam.tela_de(self.alvo.x, self.alvo.y)
-            r.draw_ui_circle(sx, sy, 90, v.a(v.SANGUE, 200), 6)
+            v.oval(r, sx, sy, 90, v.a(v.SANGUE, 200), 6)
         v.vinheta(r, TELA, 1.4 if self.golpeador.na_zona else 1.0)
         if self.alvo.vivo:
             v.seta_fora_da_tela(r, cam.tela_de(self.alvo.x, self.alvo.y), TELA, self.cor_chefe)
@@ -407,12 +430,13 @@ class ArenaScene(IScene):
             self._desenhar_pausa(r)
 
     def _mundo(self, r) -> None:
-        cam, c, g = self.camera, self.corpo, self.golpeador
+        """Primeiro o chão (avisos, tinta, luz, anéis); depois as figuras em pé, de trás
+        para a frente (quem está mais embaixo na tela fica na frente); por fim os efeitos."""
+        cam, c, g, ch, al = self.camera, self.corpo, self.golpeador, self.chefe, self.alvo
         v.desenhar_chao(r, cam, self.feel.arena, self.cenario, self.relogio, TELA)
-        v.poeira(r, cam, self.feel.arena, self.relogio, TELA)
-        al = self.alvo
-        cor = self.conjurador.tecnica.cor
-        ch = self.chefe
+        for m in self.manchas:
+            v.desenhar_mancha(r, cam, m)
+        cor_t = self.conjurador.tecnica.cor
         if al.vivo and ch.estado == "carga" and ch.padrao.tipo == "investida":
             q = ch.padrao.p
             v.aviso_investida(
@@ -424,57 +448,96 @@ class ArenaScene(IScene):
             v.aviso_erupcao(r, cam, er, self.cor_chefe)
         for ar in self.conjurador.areas:
             v.area_pendente(r, cam, ar, ar.cor, self.relogio)
+        sx, sy = cam.tela_de(c.x, c.y)
+        vit = self.vitalidade
+        if vit.vivo:
+            v.brilho(r, sx, sy, c.raio * 1.8, v.SANGUE if g.na_zona else v.ENERGIA, g.energia / 60)
+            if self.expansao.simples:
+                v.dominio_simples(r, sx, sy, c.raio, self.relogio)
+            if g.atacando and g.ataque.fase == "ativo":  # o arco do golpe, no chão
+                ang = math.atan2(c.mira[1], c.mira[0])
+                meio = math.radians(self.fc.angulo / 2)
+                cor = v.SANGUE if g.ataque.kokusen else v.TINTA
+                raio = c.raio + self.fc.alcance * 0.8
+                v.arco_chao(r, sx, sy, raio, ang - meio, ang + meio, v.a(cor, 170), 3)
+            if c.t_recarga > 0:
+                frac = c.t_recarga / (self.feel.esquiva_duracao + self.feel.esquiva_recarga)
+                v.arco_chao(r, sx, sy, c.raio + 8, 0, 6.283 * frac, v.a(v.TINTA, 90), 2)
+        for i, (x, y) in enumerate(c.rastro):  # o rastro da esquiva
+            rx, ry = cam.tela_de(x, y)
+            v.oval(r, rx, ry, c.raio * 0.9, v.a(v.ENERGIA, 30 + 22 * i))
         if al.vivo:
-            sx, sy = cam.tela_de(al.x, al.y)
-            if ch.estado in ("carga", "investida"):
-                olhar = ch.direcao
-            else:
-                d = math.hypot(c.x - al.x, c.y - al.y) or 1
-                olhar = ((c.x - al.x) / d, (c.y - al.y) / d)
+            bx, by = cam.tela_de(al.x, al.y)
+            forte = 2.2 if ch.estado == "entoando" or ch.dominio_ativo else 1.0
+            v.brilho(r, bx, by, al.raio * 1.6, self.cor_chefe, forte)
             if ch.estado == "carga":  # brilha mais forte perto de soltar
-                r.draw_ui_circle(
-                    sx,
-                    sy,
+                v.oval(
+                    r,
+                    bx,
+                    by,
                     al.raio * (1.3 + 0.3 * ch.progresso),
                     v.a(self.cor_chefe, 60 + 120 * ch.progresso),
                     3,
                 )
-            v.desenhar_chefe(
-                ch.dados.visual,
+        figuras = []  # (y no mundo, desenho)
+        if al.vivo:
+            figuras.append((al.y, self._desenhar_chefe))
+        figuras.append((c.y, self._desenhar_jogador))
+        for la in ch.lacaios:
+            figuras.append((la.y, lambda la=la: self._desenhar_lacaio(la, cor_t)))
+        for p in self.conjurador.projeteis:
+            figuras.append((p.y, lambda p=p: v.projetil(r, cam, p, p.cor)))
+        for b in ch.brasas:
+            figuras.append((b.y, lambda b=b: v.brasa(r, cam, b, self.relogio, self.cor_chefe)))
+        self._r = r
+        for _, desenhar in sorted(figuras, key=lambda f: f[0]):
+            desenhar()
+        for ef in self.efeitos:
+            v.desenhar_efeito(r, cam, ef)
+
+    def _desenhar_chefe(self) -> None:
+        r, cam, c, ch, al = self._r, self.camera, self.corpo, self.chefe, self.alvo
+        bx, by = cam.tela_de(al.x, al.y)
+        if ch.estado in ("carga", "investida"):
+            olhar = ch.direcao
+        else:
+            d = math.hypot(c.x - al.x, c.y - al.y) or 1
+            olhar = ((c.x - al.x) / d, (c.y - al.y) / d)
+        topo = f.desenhar_chefe(
+            ch.dados.visual,
+            r,
+            bx,
+            by,
+            al.raio,
+            self.relogio,
+            olhar,
+            ferido=al.t_ferido > 0,
+            queimado=ch.estado == "queimado",
+        )
+        if ch.estado == "entoando":
+            v.entoando(
                 r,
-                sx,
-                sy,
+                bx,
+                by,
+                topo,
                 al.raio,
-                self.relogio,
-                olhar,
-                ferido=al.t_ferido > 0,
-                queimado=ch.estado == "queimado",
+                ch.progresso,
+                ch.dano_na_entoacao / ch.dados.dominio.interromper,
+                self.cor_chefe,
             )
-            if ch.estado == "entoando":
-                v.entoando(
-                    r,
-                    sx,
-                    sy,
-                    al.raio,
-                    ch.progresso,
-                    ch.dano_na_entoacao / ch.dados.dominio.interromper,
-                    self.cor_chefe,
-                )
-            if al.marcado:
-                v.marca(r, sx, sy, al.raio, self.relogio, cor)
-            if al.t_atordoado > 0:
-                v.atordoado(r, sx, sy, al.raio, self.relogio)
-        for i, (x, y) in enumerate(c.rastro):  # o rastro da esquiva
-            sx, sy = cam.tela_de(x, y)
-            r.draw_ui_circle(sx, sy, c.raio * 0.8, v.a(v.ENERGIA, 30 + 22 * i))
+        if al.marcado:
+            v.marca(r, bx, by, topo, al.raio, self.relogio, self.conjurador.tecnica.cor)
+        if al.t_atordoado > 0:
+            v.atordoado(r, bx, topo, al.raio, self.relogio)
+
+    def _desenhar_jogador(self) -> None:
+        r, cam, c, g, vit = self._r, self.camera, self.corpo, self.golpeador, self.vitalidade
         sx, sy = cam.tela_de(c.x, c.y)
-        vit = self.vitalidade
         if not vit.vivo:
-            v.feiticeiro(r, sx, sy, c.raio, c.mira, 0.0, invencivel=True)
+            f.feiticeiro(r, sx, sy, c.raio, c.mira, 0.0, invencivel=True)
             return
-        if vit.curando:
-            v.reversa(r, sx, sy, c.raio, self.relogio)
-        v.feiticeiro(
+        andando = min(1.0, math.hypot(c.vx, c.vy) / self.feel.velocidade)
+        topo = f.feiticeiro(
             r,
             sx,
             sy,
@@ -485,40 +548,21 @@ class ArenaScene(IScene):
             aura=g.energia / self.fc.energia_max if g.energia > 60 else 0.0,
             zona=g.na_zona,
             invencivel=c.invencivel or vit.t_ferido > 0,
+            andando=andando,
         )
-        if self.expansao.simples:
-            v.dominio_simples(r, sx, sy, c.raio, self.relogio)
+        if vit.curando:
+            v.reversa(r, sx, sy, topo, c.raio, self.relogio)
         if self.guardando and g.energia > 0:
-            v.escudo(r, sx, sy, c.raio, self.relogio, vit.t_bloqueio > 0)
-        if g.atacando and g.ataque.fase == "ativo":  # o arco do golpe
-            ang = math.atan2(c.mira[1], c.mira[0])
-            meio = math.radians(self.fc.angulo / 2)
-            cor = v.SANGUE if g.ataque.kokusen else v.TINTA
-            r.draw_ui_arc(
-                sx, sy, c.raio + self.fc.alcance * 0.8, ang - meio, ang + meio, v.a(cor, 150), 3
-            )
-        if c.t_recarga > 0:
-            frac = c.t_recarga / (self.feel.esquiva_duracao + self.feel.esquiva_recarga)
-            r.draw_ui_arc(sx, sy, c.raio + 8, 0, 6.283 * frac, v.a(v.TINTA, 90), 2)
-        for p in self.conjurador.projeteis:
-            v.projetil(r, cam, p, p.cor)
-        for la in self.chefe.lacaios:
-            lx, ly = cam.tela_de(la.x, la.y)
-            v.transfigurado(
-                r,
-                lx,
-                ly,
-                la.raio,
-                self.relogio,
-                ferido=la.t_ferido > 0,
-                vida=la.vida / la.vida_max,
-            )
-            if la.marcado:
-                v.marca(r, lx, ly, la.raio, self.relogio, self.conjurador.tecnica.cor)
-        for b in self.chefe.brasas:
-            v.brasa(r, cam, b, self.relogio, self.cor_chefe)
-        for ef in self.efeitos:
-            v.desenhar_efeito(r, cam, ef)
+            v.escudo(r, sx, sy, topo, c.raio, self.relogio, vit.t_bloqueio > 0)
+
+    def _desenhar_lacaio(self, la, cor_t) -> None:
+        r = self._r
+        lx, ly = self.camera.tela_de(la.x, la.y)
+        topo = f.transfigurado(
+            r, lx, ly, la.raio, self.relogio, ferido=la.t_ferido > 0, vida=la.vida / la.vida_max
+        )
+        if la.marcado:
+            v.marca(r, lx, ly, topo, la.raio, self.relogio, cor_t)
 
     def _hud_chefe(self, r) -> None:
         """A barra do chefe no alto, com as marcas de onde o domínio dispara."""
@@ -534,8 +578,7 @@ class ArenaScene(IScene):
             anchor="center",
             font_id=v.FONTE_PINCEL,
         )
-        r.draw_ui_rect(x, y, w, 9, v.a(v.PRETO, 180))
-        r.draw_ui_rect(x, y, w * al.vida / al.vida_max, 9, d.cor)
+        v.barra(r, x, y, w, 11, al.vida / al.vida_max, d.cor, fantasma=self.f_chefe, inclinacao=8)
         for gat in d.dominio.gatilhos:
             gx = x + w * gat
             r.draw_ui_line(
@@ -692,9 +735,10 @@ class ArenaScene(IScene):
         g, fc, vit = self.golpeador, self.fc, self.vitalidade
         x, y, w = 24, ALTURA - 54, 220
         vy = y - 44  # a vida, acima da energia
-        r.draw_ui_rect(x, vy, w, 8, v.a(v.PRETO, 170))
-        cor_vida = v.CURA if vit.curando else (v.TINTA if vit.t_ferido <= 0 else v.SANGUE)
-        r.draw_ui_rect(x, vy, w * vit.vida / self.fd.vida_max, 8, cor_vida)
+        cor_vida = (
+            v.CURA if vit.curando else ((200, 70, 80, 255) if vit.t_ferido <= 0 else v.SANGUE)
+        )
+        v.barra(r, x, vy, w, 10, vit.vida / self.fd.vida_max, cor_vida, fantasma=self.f_vida)
         if vit.curando:
             r.draw_text(
                 x + w + 12, vy - 8, "反転術式", 18, v.a(v.CURA, 220), font_id=v.FONTE_PINCEL
@@ -724,9 +768,8 @@ class ArenaScene(IScene):
                 anchor="center",
             )
         r.draw_text(x, y - 26, "呪力", 20, v.a(v.TINTA, 200), font_id=v.FONTE_PINCEL)
-        r.draw_ui_rect(x, y, w, 10, v.a(v.PRETO, 170))
         cor = v.SANGUE if g.na_zona else v.ENERGIA
-        r.draw_ui_rect(x, y, w * g.energia / fc.energia_max, 10, cor)
+        v.barra(r, x, y, w, 10, g.energia / fc.energia_max, cor)
         corte = x + w * fc.reforco_custo / fc.energia_max
         r.draw_ui_line(corte, y - 2, corte, y + 12, v.a(v.TINTA, 160), 1)
         if self.t_sem_energia > 0:

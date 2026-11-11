@@ -94,6 +94,8 @@ class RecompensaScene(IScene):
         self.relogio += delta_time
         e = self.entrada
         n = len(self.ofertas)
+        if self.relogio < 0.4 and n:  # o Espaço da esquiva não escolhe sem querer
+            return
         if not n:  # nada a oferecer: segue a rota
             self.ao_escolher(None)
             return
@@ -174,7 +176,7 @@ class RecompensaScene(IScene):
         r.draw_text(
             LARGURA / 2,
             ALTURA - 20,
-            "A/D escolhe · Enter pega",
+            "A/D escolhe · Espaço pega",
             12,
             v.a(v.TINTA, 110),
             anchor="center",
@@ -184,8 +186,12 @@ class RecompensaScene(IScene):
 class ResultadoScene(IScene):
     def __init__(self, entrada, rota: Rota, ao_voltar) -> None:
         self.entrada, self.rota, self.ao_voltar = entrada, rota, ao_voltar
+        self.relogio = 0.0
 
     def update(self, world, delta_time: float) -> None:
+        self.relogio += delta_time
+        if self.relogio < 0.4:
+            return
         e = self.entrada
         if e.is_action_pressed("confirmar") or e.is_action_pressed("sair"):
             self.ao_voltar()
@@ -215,7 +221,7 @@ class ResultadoScene(IScene):
         r.draw_text(
             LARGURA / 2,
             ALTURA - 20,
-            "Enter volta ao título",
+            "Espaço volta ao título",
             12,
             v.a(v.TINTA, 110),
             anchor="center",
