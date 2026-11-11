@@ -1,0 +1,38 @@
+{
+  "_nota": "A rota: lutas em sequência (grau escala vida e dano do chefe). Entre lutas, escolha 1 de 3 recompensas. mods: feel = combate | defesa | dominio | movimento; op = mult | soma. Votos são trocas: ganha de um lado, paga do outro.",
+  "cura_entre_lutas": 35,
+  "lutas": [
+    {"chefe": "vulcao", "grau": 1.0},
+    {"chefe": "mahito", "grau": 1.0},
+    {"chefe": "vulcao", "grau": 1.35},
+    {"chefe": "mahito", "grau": 1.6},
+    {"chefe": "sukuna", "grau": 1.0}
+  ],
+  "recompensas": [
+    {"id": "punho_pesado", "nome": "Punho Pesado", "tipo": "bencao", "descricao": "golpes dão 25% a mais de dano",
+     "mods": [{"feel": "combate", "campo": "danos", "op": "mult", "valor": 1.25}]},
+    {"id": "fluxo_refinado", "nome": "Fluxo Refinado", "tipo": "bencao", "descricao": "a energia volta 50% mais rápido",
+     "mods": [{"feel": "combate", "campo": "energia_regen", "op": "mult", "valor": 1.5}]},
+    {"id": "corpo_temperado", "nome": "Corpo Temperado", "tipo": "bencao", "descricao": "+25 de vida máxima",
+     "mods": [{"feel": "defesa", "campo": "vida_max", "op": "soma", "valor": 25}]},
+    {"id": "clarao_afiado", "nome": "Clarão Afiado", "tipo": "bencao", "descricao": "a janela do Kokusen fica 30% maior",
+     "mods": [{"feel": "combate", "campo": "kokusen_janela", "op": "mult", "valor": 1.3},
+              {"feel": "combate", "campo": "kokusen_janela_zona", "op": "mult", "valor": 1.3}]},
+    {"id": "reversa_fluida", "nome": "Reversa Fluida", "tipo": "bencao", "descricao": "a Técnica Reversa cura 40% a mais",
+     "mods": [{"feel": "defesa", "campo": "reversa_cura", "op": "mult", "valor": 1.4}]},
+    {"id": "pele_reforcada", "nome": "Pele Reforçada", "tipo": "bencao", "descricao": "o reforço segura 90% do golpe",
+     "mods": [{"feel": "defesa", "campo": "guarda_reducao", "op": "soma", "valor": 0.15}]},
+    {"id": "passo_leve", "nome": "Passo Leve", "tipo": "bencao", "descricao": "a esquiva recarrega 35% mais rápido",
+     "mods": [{"feel": "movimento", "campo": "esquiva_recarga", "op": "mult", "valor": 0.65}]},
+    {"id": "voto_do_punho", "nome": "Voto do Punho", "tipo": "voto", "descricao": "golpes +60% de dano; a Técnica Reversa cura metade",
+     "mods": [{"feel": "combate", "campo": "danos", "op": "mult", "valor": 1.6},
+              {"feel": "defesa", "campo": "reversa_cura", "op": "mult", "valor": 0.5}]},
+    {"id": "voto_do_confinamento", "nome": "Voto do Confinamento", "tipo": "voto", "descricao": "o domínio custa 40 a menos e queima menos; -20 de vida máxima",
+     "mods": [{"feel": "dominio", "campo": "custo", "op": "soma", "valor": -40},
+              {"feel": "dominio", "campo": "queimado", "op": "mult", "valor": 0.5},
+              {"feel": "defesa", "campo": "vida_max", "op": "soma", "valor": -20}]},
+    {"id": "voto_da_entrega", "nome": "Voto da Entrega", "tipo": "voto", "descricao": "cada acerto dá o dobro de energia; sem reforço defensivo",
+     "mods": [{"feel": "combate", "campo": "energia_por_golpe", "op": "mult", "valor": 2.0},
+              {"feel": "defesa", "campo": "guarda_reducao", "op": "mult", "valor": 0.0}]}
+  ]
+}

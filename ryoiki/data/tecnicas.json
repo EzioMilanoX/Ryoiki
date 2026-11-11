@@ -1,0 +1,174 @@
+{
+  "_nota": "Cada técnica é uma lista de golpes; cada golpe, uma lista de blocos. Formas: projetil, area, marcados. Efeitos: dano, puxar, empurrar, marcar, atordoar, se_marcado (entao, senao, consome). Personagem novo é só outra combinação. O domínio (opcional) aplica os efeitos a cada tique, onde o alvo estiver: é o acerto garantido.",
+  "jogador": "boneco_de_palha",
+  "tecnicas": {
+    "boneco_de_palha": {
+      "nome": "Técnica do Boneco de Palha",
+      "kanji": "芻霊呪法",
+      "cor": [
+        230,
+        120,
+        80
+      ],
+      "golpes": [
+        {
+          "id": "pregos",
+          "nome": "Pregos",
+          "custo": 10,
+          "recarga": 0.55,
+          "blocos": [
+            {
+              "tipo": "projetil",
+              "quantidade": 3,
+              "espalhar": 18,
+              "velocidade": 820,
+              "raio": 6,
+              "alcance": 520,
+              "efeitos": [
+                {
+                  "tipo": "dano",
+                  "valor": 5
+                },
+                {
+                  "tipo": "marcar",
+                  "duracao": 6
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ressonancia",
+          "nome": "Ressonância",
+          "custo": 30,
+          "recarga": 2.5,
+          "blocos": [
+            {
+              "tipo": "marcados",
+              "efeitos": [
+                {
+                  "tipo": "se_marcado",
+                  "consome": true,
+                  "entao": [
+                    {
+                      "tipo": "dano",
+                      "valor": 32
+                    },
+                    {
+                      "tipo": "atordoar",
+                      "duracao": 0.8
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "dominio": {
+        "nome": "Bosque dos Mil Pregos",
+        "kanji": "千釘林",
+        "duracao": 5,
+        "tique": 0.5,
+        "refinamento": 0.17,
+        "efeitos": [
+          {
+            "tipo": "dano",
+            "valor": 5
+          },
+          {
+            "tipo": "marcar",
+            "duracao": 6
+          }
+        ]
+      }
+    },
+    "ilimitado": {
+      "nome": "Técnica do Ilimitado",
+      "kanji": "無下限呪術",
+      "cor": [
+        110,
+        150,
+        255
+      ],
+      "golpes": [
+        {
+          "id": "azul",
+          "nome": "Azul",
+          "custo": 20,
+          "recarga": 1.6,
+          "blocos": [
+            {
+              "tipo": "area",
+              "onde": "cursor",
+              "distancia": 360,
+              "atraso": 0.35,
+              "raio": 120,
+              "efeitos": [
+                {
+                  "tipo": "puxar",
+                  "forca": 520
+                },
+                {
+                  "tipo": "dano",
+                  "valor": 8
+                },
+                {
+                  "tipo": "atordoar",
+                  "duracao": 0.5
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vermelho",
+          "nome": "Vermelho",
+          "cor": [
+            235,
+            60,
+            60
+          ],
+          "custo": 35,
+          "recarga": 2.8,
+          "blocos": [
+            {
+              "tipo": "projetil",
+              "velocidade": 950,
+              "raio": 18,
+              "alcance": 700,
+              "atravessa": true,
+              "efeitos": [
+                {
+                  "tipo": "dano",
+                  "valor": 26
+                },
+                {
+                  "tipo": "empurrar",
+                  "forca": 700
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "dominio": {
+        "nome": "Vazio Infinito",
+        "kanji": "無量空処",
+        "duracao": 4,
+        "tique": 0.5,
+        "refinamento": 0.21,
+        "efeitos": [
+          {
+            "tipo": "dano",
+            "valor": 3
+          },
+          {
+            "tipo": "atordoar",
+            "duracao": 0.6
+          }
+        ]
+      }
+    }
+  }
+}

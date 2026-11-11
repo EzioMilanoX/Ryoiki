@@ -1,0 +1,81 @@
+{
+  "_nota": "O feel do movimento. Ajuste aqui, sem mexer em código (px, segundos).",
+  "velocidade": 300,
+  "aceleracao": 2600,
+  "atrito": 3200,
+  "esquiva_velocidade": 950,
+  "esquiva_duracao": 0.16,
+  "esquiva_invencivel": 0.2,
+  "esquiva_recarga": 0.45,
+  "camera_suavidade": 9.0,
+  "camera_mira": 0.18,
+  "arena": [
+    1600,
+    1000
+  ],
+  "combate": {
+    "_nota": "O golpe, a energia e o Kokusen (segundos, px, px/s).",
+    "alcance": 64,
+    "angulo": 120,
+    "antes": 0.05,
+    "ativo": 0.07,
+    "depois": 0.14,
+    "combo_janela": 0.32,
+    "danos": [
+      8,
+      8,
+      14
+    ],
+    "empurroes": [
+      90,
+      90,
+      320
+    ],
+    "avanco": 160,
+    "lentidao": 0.35,
+    "kokusen_janela": 0.06,
+    "kokusen_janela_zona": 0.12,
+    "kokusen_mult": 2.5,
+    "zona_duracao": 5.0,
+    "hitstop": 0.045,
+    "hitstop_final": 0.085,
+    "hitstop_kokusen": 0.22,
+    "energia_max": 100,
+    "energia_regen": 5,
+    "energia_por_golpe": 4,
+    "energia_kokusen": 30,
+    "reforco_custo": 25,
+    "reforco_mult": 2.0,
+    "reforco_antes": 0.12,
+    "reforco_empurrao": 420
+  },
+  "defesa": {
+    "_nota": "Vida, Técnica Reversa (segurar R) e reforço como defesa (segurar o botão de reforço).",
+    "vida_max": 100,
+    "reversa_custo": 30,
+    "reversa_cura": 15,
+    "reversa_lentidao": 0.25,
+    "guarda_reducao": 0.75,
+    "guarda_custo": 0.8,
+    "guarda_lentidao": 0.55,
+    "renascer": 2.0
+  },
+  "maldicao_treino": {
+    "_nota": "A maldição de treino que revida (px, s).",
+    "velocidade": 45,
+    "gatilho": 190,
+    "carga": 0.8,
+    "raio": 100,
+    "dano": 18,
+    "espera": 2.2
+  },
+  "dominio": {
+    "_nota": "O seu domínio (F), o choque e o Domínio Simples (segure C).",
+    "custo": 70,
+    "queimado": 6,
+    "choque_bomba": 30,
+    "choque_por_energia": 0.008,
+    "choque_por_dano": 0.004,
+    "simples_custo": 10
+  }
+}

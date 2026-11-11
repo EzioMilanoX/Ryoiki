@@ -1,0 +1,67 @@
+{
+  "cima": [
+    "KEY_W",
+    "KEY_UP",
+    "PAD_UP"
+  ],
+  "baixo": [
+    "KEY_S",
+    "KEY_DOWN",
+    "PAD_DOWN"
+  ],
+  "esquerda": [
+    "KEY_A",
+    "KEY_LEFT",
+    "PAD_LEFT"
+  ],
+  "direita": [
+    "KEY_D",
+    "KEY_RIGHT",
+    "PAD_RIGHT"
+  ],
+  "esquiva": [
+    "KEY_SPACE",
+    "KEY_K",
+    "PAD_A"
+  ],
+  "golpe": [
+    "MOUSE_LEFT",
+    "KEY_J",
+    "PAD_X"
+  ],
+  "reforco": [
+    "MOUSE_RIGHT",
+    "KEY_L",
+    "PAD_Y"
+  ],
+  "tecnica_1": [
+    "KEY_E",
+    "PAD_RB"
+  ],
+  "tecnica_2": [
+    "KEY_Q",
+    "PAD_LB"
+  ],
+  "reversa": [
+    "KEY_R",
+    "PAD_B"
+  ],
+  "trocar": [
+    "KEY_TAB"
+  ],
+  "dominio": [
+    "KEY_F",
+    "PAD_START"
+  ],
+  "simples": [
+    "KEY_C",
+    "PAD_BACK"
+  ],
+  "confirmar": [
+    "KEY_RETURN",
+    "PAD_A"
+  ],
+  "sair": [
+    "KEY_ESCAPE"
+  ]
+}

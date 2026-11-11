@@ -1,0 +1,219 @@
+{
+  "_nota": "Os chefes. Padrões: investida, erupcoes, brasas, invocar, cortes (o resto são números do tipo). visual escolhe o desenho; regeneracao é vida/s. O domínio entoa quando a vida cai abaixo de cada gatilho; dano >= interromper ou um atordoamento corta.",
+  "chefe": "vulcao",
+  "maldicoes": {
+    "vulcao": {
+      "nome": "Jogo",
+      "titulo": "maldição de grau especial nascida do medo da terra",
+      "kanji": "漏瑚",
+      "cor": [
+        220,
+        100,
+        40
+      ],
+      "vida": 900,
+      "raio": 34,
+      "massa": 5,
+      "velocidade": 70,
+      "distancia": 200,
+      "espera": 1.1,
+      "padroes": [
+        {
+          "id": "investida",
+          "nome": "Investida",
+          "tipo": "investida",
+          "carga": 0.75,
+          "recuperacao": 0.7,
+          "velocidade": 900,
+          "alcance": 560,
+          "dano": 20
+        },
+        {
+          "id": "erupcoes",
+          "nome": "Erupção",
+          "tipo": "erupcoes",
+          "carga": 0.4,
+          "recuperacao": 0.5,
+          "quantidade": 5,
+          "espalhar": 220,
+          "raio": 70,
+          "atraso": 0.9,
+          "dano": 14
+        },
+        {
+          "id": "insetos",
+          "nome": "Insetos de Fogo",
+          "tipo": "brasas",
+          "carga": 0.5,
+          "recuperacao": 0.5,
+          "quantidade": 7,
+          "espalhar": 70,
+          "velocidade": 380,
+          "raio": 9,
+          "alcance": 800,
+          "dano": 10
+        }
+      ],
+      "dominio": {
+        "nome": "Caixão da Montanha de Ferro",
+        "kanji": "蓋棺鉄囲山",
+        "entoar": 1.6,
+        "interromper": 60,
+        "duracao": 6,
+        "tique": 0.5,
+        "dano_tique": 3,
+        "gatilhos": [
+          0.65,
+          0.3
+        ],
+        "queimado": 5,
+        "refinamento": 0.2
+      },
+      "visual": "vulcao"
+    },
+    "mahito": {
+      "nome": "Mahito",
+      "titulo": "maldição de grau especial nascida do ódio entre humanos",
+      "kanji": "真人",
+      "visual": "remendos",
+      "cor": [
+        120,
+        185,
+        215
+      ],
+      "vida": 760,
+      "raio": 22,
+      "massa": 2.5,
+      "velocidade": 110,
+      "distancia": 170,
+      "espera": 1.0,
+      "regeneracao": 4,
+      "padroes": [
+        {
+          "id": "transfigurados",
+          "nome": "Humanos Transfigurados",
+          "tipo": "invocar",
+          "carga": 0.6,
+          "recuperacao": 0.6,
+          "quantidade": 3,
+          "maximo": 6,
+          "vida": 30,
+          "raio": 14,
+          "velocidade": 120,
+          "dano": 9
+        },
+        {
+          "id": "lamina",
+          "nome": "Braço-Lâmina",
+          "tipo": "investida",
+          "carga": 0.55,
+          "recuperacao": 0.5,
+          "velocidade": 1050,
+          "alcance": 420,
+          "dano": 18
+        },
+        {
+          "id": "corpo_repelido",
+          "nome": "Corpo Repelido",
+          "tipo": "brasas",
+          "carga": 0.7,
+          "recuperacao": 0.6,
+          "quantidade": 3,
+          "espalhar": 40,
+          "velocidade": 300,
+          "raio": 20,
+          "alcance": 700,
+          "dano": 16
+        }
+      ],
+      "dominio": {
+        "nome": "Autoencarnação da Perfeição",
+        "kanji": "自閉円頓裹",
+        "entoar": 1.4,
+        "interromper": 55,
+        "duracao": 5,
+        "tique": 0.5,
+        "dano_tique": 5,
+        "gatilhos": [
+          0.6,
+          0.25
+        ],
+        "queimado": 5,
+        "refinamento": 0.23
+      }
+    },
+    "sukuna": {
+      "nome": "Sukuna",
+      "titulo": "o Rei das Maldições",
+      "kanji": "両面宿儺",
+      "visual": "rei",
+      "cor": [
+        205,
+        40,
+        60
+      ],
+      "vida": 1100,
+      "raio": 26,
+      "massa": 6,
+      "velocidade": 120,
+      "distancia": 230,
+      "espera": 0.85,
+      "regeneracao": 2,
+      "padroes": [
+        {
+          "id": "desmantelar",
+          "nome": "Desmantelar",
+          "tipo": "cortes",
+          "carga": 0.35,
+          "recuperacao": 0.45,
+          "quantidade": 4,
+          "espalhar": 140,
+          "comprimento": 900,
+          "largura": 18,
+          "atraso": 0.6,
+          "intervalo": 0.12,
+          "dano": 12
+        },
+        {
+          "id": "clivar",
+          "nome": "Clivar",
+          "tipo": "investida",
+          "carga": 0.6,
+          "recuperacao": 0.6,
+          "velocidade": 1150,
+          "alcance": 480,
+          "dano": 24
+        },
+        {
+          "id": "fuga",
+          "nome": "Fuga (Abrir)",
+          "tipo": "brasas",
+          "carga": 1.1,
+          "recuperacao": 0.9,
+          "quantidade": 1,
+          "espalhar": 0,
+          "velocidade": 520,
+          "raio": 28,
+          "alcance": 900,
+          "dano": 32
+        }
+      ],
+      "dominio": {
+        "nome": "Santuário Malevolente",
+        "kanji": "伏魔御廚子",
+        "entoar": 1.2,
+        "interromper": 70,
+        "duracao": 5,
+        "tique": 0.35,
+        "dano_tique": 5,
+        "gatilhos": [
+          0.7,
+          0.4,
+          0.15
+        ],
+        "queimado": 4,
+        "refinamento": 0.3
+      }
+    }
+  }
+}
